@@ -53,7 +53,7 @@ namespace PictureSorter
       System.Windows.Forms.ToolStripMenuItem size1MenuItem;
       System.Windows.Forms.ToolStripMenuItem size3MenuItem;
       System.Windows.Forms.ToolStripMenuItem size2MenuItem;
-      System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Uncategorized", System.Windows.Forms.HorizontalAlignment.Left);
+      System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Uncategorized", System.Windows.Forms.HorizontalAlignment.Left);
       this.iconTool = new System.Windows.Forms.ToolStripButton();
       this.selectGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.hsplit = new System.Windows.Forms.SplitContainer();
@@ -305,9 +305,10 @@ namespace PictureSorter
       // sizeDropPic
       // 
       sizeDropPic.Image = ((System.Drawing.Image)(resources.GetObject("sizeDropPic.Image")));
-      sizeDropPic.Location = new System.Drawing.Point(139, 332);
+      sizeDropPic.Location = new System.Drawing.Point(135, 326);
       sizeDropPic.Name = "sizeDropPic";
-      sizeDropPic.Size = new System.Drawing.Size(11, 6);
+      sizeDropPic.Size = new System.Drawing.Size(20, 18);
+      sizeDropPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
       sizeDropPic.TabIndex = 44;
       sizeDropPic.TabStop = false;
       sizeDropPic.Click += new System.EventHandler(this.sizeDropPic_Click);
@@ -380,10 +381,10 @@ namespace PictureSorter
             | System.Windows.Forms.AnchorStyles.Right)));
       this.lstFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.colName});
-      listViewGroup1.Header = "Uncategorized";
-      listViewGroup1.Name = "Uncategorized";
+      listViewGroup2.Header = "Uncategorized";
+      listViewGroup2.Name = "Uncategorized";
       this.lstFiles.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup1});
+            listViewGroup2});
       this.lstFiles.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
       this.lstFiles.HideSelection = false;
       this.lstFiles.LabelEdit = true;
@@ -439,7 +440,6 @@ namespace PictureSorter
       // 
       // vsplit.Panel2
       // 
-      this.vsplit.Panel2.Controls.Add(sizeDropPic);
       this.vsplit.Panel2.Controls.Add(this.btnResize);
       this.vsplit.Panel2.Controls.Add(this.txtCacheSize);
       this.vsplit.Panel2.Controls.Add(lblCacheSize);
@@ -469,6 +469,7 @@ namespace PictureSorter
       this.vsplit.Panel2.Controls.Add(this.lstGroups);
       this.vsplit.Panel2.Controls.Add(lblSettings);
       this.vsplit.Panel2.Controls.Add(lblNewSize);
+      this.vsplit.Panel2.Controls.Add(sizeDropPic);
       this.vsplit.Panel2.Layout += new System.Windows.Forms.LayoutEventHandler(this.vsplit_Panel2_Layout);
       this.vsplit.Size = new System.Drawing.Size(792, 588);
       this.vsplit.SplitterDistance = 592;
