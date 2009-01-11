@@ -147,11 +147,13 @@ namespace PictureSorter
       this.Controls.Add(lblPics);
       this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
       this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+      this.KeyPreview = true;
       this.MaximizeBox = false;
       this.MinimizeBox = false;
       this.Name = "SettingsForm";
       this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
       this.Text = "Open Images";
+      this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.SettingsForm_KeyDown);
       this.ResumeLayout(false);
       this.PerformLayout();
 

@@ -53,7 +53,7 @@ namespace PictureSorter
       System.Windows.Forms.ToolStripMenuItem size1MenuItem;
       System.Windows.Forms.ToolStripMenuItem size3MenuItem;
       System.Windows.Forms.ToolStripMenuItem size2MenuItem;
-      System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Uncategorized", System.Windows.Forms.HorizontalAlignment.Left);
+      System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Uncategorized", System.Windows.Forms.HorizontalAlignment.Left);
       this.iconTool = new System.Windows.Forms.ToolStripButton();
       this.selectGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.hsplit = new System.Windows.Forms.SplitContainer();
@@ -380,10 +380,10 @@ namespace PictureSorter
             | System.Windows.Forms.AnchorStyles.Right)));
       this.lstFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.colName});
-      listViewGroup2.Header = "Uncategorized";
-      listViewGroup2.Name = "Uncategorized";
+      listViewGroup1.Header = "Uncategorized";
+      listViewGroup1.Name = "Uncategorized";
       this.lstFiles.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup2});
+            listViewGroup1});
       this.lstFiles.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
       this.lstFiles.HideSelection = false;
       this.lstFiles.LabelEdit = true;

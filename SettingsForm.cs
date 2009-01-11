@@ -78,6 +78,11 @@ public partial class SettingsForm : Form
     else DialogResult = DialogResult.OK;
   }
 
+  void SettingsForm_KeyDown(object sender, KeyEventArgs e)
+  {
+    if(e.KeyCode == Keys.F1 && e.Modifiers == Keys.None) Program.ShowHelp();
+  }
+
   string[] pics;
 }
 

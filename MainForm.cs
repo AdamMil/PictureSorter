@@ -1012,15 +1012,6 @@ partial class MainForm : Form
     progress.Maximum = count;
   }
 
-  void ShowHelp()
-  {
-    string htmlFile = Path.Combine(Program.DataPath, "help.html")
-                        .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-    System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo(htmlFile);
-    psi.UseShellExecute = true;
-    System.Diagnostics.Process.Start(psi);
-  }
-
   void StopLoadingIcons()
   {
     StopThread(iconThread);
@@ -1175,7 +1166,7 @@ partial class MainForm : Form
   {
     if(e.Modifiers == Keys.None)
     {
-      if(e.KeyCode == Keys.F1) ShowHelp();
+      if(e.KeyCode == Keys.F1) Program.ShowHelp();
       else if(e.KeyCode == Keys.F3) CreateGroup();
       else if(e.KeyCode == Keys.Escape) lstFiles.Focus();
     }
