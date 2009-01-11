@@ -516,6 +516,21 @@ partial class MainForm : Form
     }
   }
 
+  void FillGroupMenu(ToolStripMenuItem menu, EventHandler handler)
+  {
+    for(int i=menu.DropDownItems.Count-1; i > 0; i--) menu.DropDownItems.RemoveAt(i);
+
+    menu.DropDownItems[0].Tag = DefaultGroup;
+    for(int i=0; i<lstGroups.Items.Count; i++)
+    {
+      string prefix;
+      if(i < 9) prefix = "&" + (i+1).ToString(CultureInfo.InvariantCulture);
+      else if(i == 9) prefix = "1&0";
+      else prefix = (i+1).ToString(CultureInfo.InvariantCulture);
+      menu.DropDownItems.Add(prefix + ". " + (string)lstGroups.Items[i].Tag, null, handler).Tag = i;
+    }
+  }
+
   Image GetCachedImage(FileItem item)
   {
     for(LinkedListNode<KeyValuePair<FileItem, Image>> node = imageCache.First; node != null; node = node.Next)
@@ -1160,6 +1175,11 @@ partial class MainForm : Form
     }
   }
 
+  void SelectAllImages()
+  {
+    foreach(ListViewItem item in lstFiles.Items) item.Selected = true;
+  }
+
   void SetCachedImage(FileItem item, Image image, bool imageContentsChanged)
   {
     if(image != GetCachedImage(item)) // this moves the image to the front of the linked list
@@ -1409,7 +1429,7 @@ partial class MainForm : Form
     }
     else if(e.KeyCode == Keys.A && e.Modifiers == Keys.Control)
     {
-      foreach(ListViewItem item in lstFiles.Items) item.Selected = true;
+      SelectAllImages();
     }
   }
 
@@ -1579,6 +1599,63 @@ partial class MainForm : Form
     {
       lstFiles.DoDragDrop(new DraggedItems(this, lstFiles.SelectedItems), DragDropEffects.Copy);
     }
+  }
+
+  void imageMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+  {
+    ContextMenuStrip menu = (ContextMenuStrip)sender;
+    int sepCount = 0;
+    bool enabled = lstFiles.SelectedItems.Count != 0;
+
+    foreach(ToolStripItem item in menu.Items)
+    {
+      if(item is ToolStripSeparator)
+      {
+        if(++sepCount == 2) break; // items after the second separator are always enabled
+      }
+      else item.Enabled = enabled;
+    }
+  }
+
+  void assignToMenuItem_DropDownOpening(object sender, EventArgs e)
+  {
+    FillGroupMenu((ToolStripMenuItem)sender, assignToGroupMenuItem_Click);
+  }
+
+  void assignToGroupMenuItem_Click(object sender, EventArgs e)
+  {
+    ToolStripMenuItem menuItem = (ToolStripMenuItem)sender;
+    AssignImagesToGroup((int)menuItem.Tag);
+  }
+
+  void renameImageMenuItem_Click(object sender, EventArgs e)
+  {
+    RenameImages();
+  }
+
+  void deleteImageMenuItem_Click(object sender, EventArgs e)
+  {
+    DeleteImages(Control.ModifierKeys != Keys.Shift);
+  }
+
+  void rotateImageMenuItem_Click(object sender, EventArgs e)
+  {
+    RotateImages((int)((ToolStripMenuItem)sender).Tag);
+  }
+
+  void selectAllImagesMenuItem_Click(object sender, EventArgs e)
+  {
+    SelectAllImages();
+  }
+
+  void selectImagesInGroupMenuItem_DropDownOpening(object sender, EventArgs e)
+  {
+    FillGroupMenu((ToolStripMenuItem)sender, selectGroupImagesMenuItem_Click);
+  }
+
+  void selectGroupImagesMenuItem_Click(object sender, EventArgs e)
+  {
+    SelectGroup((int)((ToolStripMenuItem)sender).Tag, Control.ModifierKeys == Keys.Shift);
   }
 
   readonly LinkedList<KeyValuePair<FileItem, Image>> imageCache = new LinkedList<KeyValuePair<FileItem,Image>>();

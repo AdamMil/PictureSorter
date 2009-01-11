@@ -53,9 +53,26 @@ namespace PictureSorter
       System.Windows.Forms.ToolStripMenuItem size1MenuItem;
       System.Windows.Forms.ToolStripMenuItem size3MenuItem;
       System.Windows.Forms.ToolStripMenuItem size2MenuItem;
+      System.Windows.Forms.ContextMenuStrip groupMenu;
+      System.Windows.Forms.ContextMenuStrip imageMenu;
+      System.Windows.Forms.ToolStripMenuItem assignToMenuItem;
+      System.Windows.Forms.ToolStripMenuItem assignToNoGroupMenuItem;
+      System.Windows.Forms.ToolStripMenuItem renameImageMenuItem;
+      System.Windows.Forms.ToolStripMenuItem deleteImageMenuItem;
+      System.Windows.Forms.ToolStripSeparator menuSep3;
+      System.Windows.Forms.ToolStripMenuItem rotateImageCC90;
+      System.Windows.Forms.ToolStripMenuItem rotateImageC90;
+      System.Windows.Forms.ToolStripMenuItem rotateImage180;
+      System.Windows.Forms.ToolStripSeparator menuSep4;
+      System.Windows.Forms.ToolStripMenuItem selectAllImagesMenuItem;
+      System.Windows.Forms.ToolStripMenuItem selectImagesInGroupMenuItem;
+      System.Windows.Forms.ToolStripMenuItem selectNoGroupMenuItem;
       System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Uncategorized", System.Windows.Forms.HorizontalAlignment.Left);
       this.iconTool = new System.Windows.Forms.ToolStripButton();
+      this.deleteGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      this.renameGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.selectGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      this.assignSelectedImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.hsplit = new System.Windows.Forms.SplitContainer();
       this.progress = new System.Windows.Forms.ProgressBar();
       this.lstFiles = new System.Windows.Forms.ListView();
@@ -80,10 +97,6 @@ namespace PictureSorter
       this.chkCreateGroupDirs = new System.Windows.Forms.CheckBox();
       this.chkAutoRename = new System.Windows.Forms.CheckBox();
       this.lstGroups = new System.Windows.Forms.ListView();
-      this.groupMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-      this.deleteGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-      this.renameGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-      this.assignSelectedImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.sizeMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
       this.menuSep2 = new System.Windows.Forms.ToolStripSeparator();
       this.size4MenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -110,8 +123,24 @@ namespace PictureSorter
       size1MenuItem = new System.Windows.Forms.ToolStripMenuItem();
       size3MenuItem = new System.Windows.Forms.ToolStripMenuItem();
       size2MenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      groupMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+      imageMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+      assignToMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      assignToNoGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      renameImageMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      deleteImageMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      menuSep3 = new System.Windows.Forms.ToolStripSeparator();
+      rotateImageCC90 = new System.Windows.Forms.ToolStripMenuItem();
+      rotateImageC90 = new System.Windows.Forms.ToolStripMenuItem();
+      rotateImage180 = new System.Windows.Forms.ToolStripMenuItem();
+      menuSep4 = new System.Windows.Forms.ToolStripSeparator();
+      selectAllImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      selectImagesInGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      selectNoGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       tools.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(sizeDropPic)).BeginInit();
+      groupMenu.SuspendLayout();
+      imageMenu.SuspendLayout();
       this.hsplit.Panel1.SuspendLayout();
       this.hsplit.Panel2.SuspendLayout();
       this.hsplit.SuspendLayout();
@@ -119,7 +148,6 @@ namespace PictureSorter
       this.vsplit.Panel1.SuspendLayout();
       this.vsplit.Panel2.SuspendLayout();
       this.vsplit.SuspendLayout();
-      this.groupMenu.SuspendLayout();
       this.sizeMenu.SuspendLayout();
       this.SuspendLayout();
       // 
@@ -207,7 +235,7 @@ namespace PictureSorter
       // newGroupMenuItem
       // 
       newGroupMenuItem.Name = "newGroupMenuItem";
-      newGroupMenuItem.Size = new System.Drawing.Size(188, 22);
+      newGroupMenuItem.Size = new System.Drawing.Size(163, 22);
       newGroupMenuItem.Text = "&New Group";
       newGroupMenuItem.Click += new System.EventHandler(this.newGroupMenuItem_Click);
       // 
@@ -299,7 +327,7 @@ namespace PictureSorter
       // menuSep1
       // 
       menuSep1.Name = "menuSep1";
-      menuSep1.Size = new System.Drawing.Size(185, 6);
+      menuSep1.Size = new System.Drawing.Size(160, 6);
       // 
       // sizeDropPic
       // 
@@ -315,30 +343,170 @@ namespace PictureSorter
       // size1MenuItem
       // 
       size1MenuItem.Name = "size1MenuItem";
-      size1MenuItem.Size = new System.Drawing.Size(122, 22);
+      size1MenuItem.Size = new System.Drawing.Size(97, 22);
       size1MenuItem.Text = "800x600";
       size1MenuItem.Click += new System.EventHandler(this.sizeMenuItem_Click);
       // 
       // size3MenuItem
       // 
       size3MenuItem.Name = "size3MenuItem";
-      size3MenuItem.Size = new System.Drawing.Size(122, 22);
+      size3MenuItem.Size = new System.Drawing.Size(97, 22);
       size3MenuItem.Text = "1024x768";
       size3MenuItem.Click += new System.EventHandler(this.sizeMenuItem_Click);
       // 
       // size2MenuItem
       // 
       size2MenuItem.Name = "size2MenuItem";
-      size2MenuItem.Size = new System.Drawing.Size(122, 22);
+      size2MenuItem.Size = new System.Drawing.Size(97, 22);
       size2MenuItem.Text = "1280x960";
       size2MenuItem.Click += new System.EventHandler(this.sizeMenuItem_Click);
+      // 
+      // groupMenu
+      // 
+      groupMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            newGroupMenuItem,
+            this.deleteGroupMenuItem,
+            this.renameGroupMenuItem,
+            this.selectGroupMenuItem,
+            menuSep1,
+            this.assignSelectedImagesMenuItem});
+      groupMenu.Name = "groupMenu";
+      groupMenu.ShowImageMargin = false;
+      groupMenu.Size = new System.Drawing.Size(164, 120);
+      groupMenu.Opening += new System.ComponentModel.CancelEventHandler(this.groupMenu_Opening);
+      // 
+      // deleteGroupMenuItem
+      // 
+      this.deleteGroupMenuItem.Name = "deleteGroupMenuItem";
+      this.deleteGroupMenuItem.Size = new System.Drawing.Size(163, 22);
+      this.deleteGroupMenuItem.Text = "&Delete Group";
+      this.deleteGroupMenuItem.Click += new System.EventHandler(this.deleteGroupMenuItem_Click);
+      // 
+      // renameGroupMenuItem
+      // 
+      this.renameGroupMenuItem.Name = "renameGroupMenuItem";
+      this.renameGroupMenuItem.Size = new System.Drawing.Size(163, 22);
+      this.renameGroupMenuItem.Text = "&Rename Group";
+      this.renameGroupMenuItem.Click += new System.EventHandler(this.renameGroupMenuItem_Click);
       // 
       // selectGroupMenuItem
       // 
       this.selectGroupMenuItem.Name = "selectGroupMenuItem";
-      this.selectGroupMenuItem.Size = new System.Drawing.Size(188, 22);
+      this.selectGroupMenuItem.Size = new System.Drawing.Size(163, 22);
       this.selectGroupMenuItem.Text = "&Select Group";
       this.selectGroupMenuItem.Click += new System.EventHandler(this.selectGroupMenuItem_Click);
+      // 
+      // assignSelectedImagesMenuItem
+      // 
+      this.assignSelectedImagesMenuItem.Name = "assignSelectedImagesMenuItem";
+      this.assignSelectedImagesMenuItem.Size = new System.Drawing.Size(163, 22);
+      this.assignSelectedImagesMenuItem.Text = "&Assign Images to Group";
+      this.assignSelectedImagesMenuItem.Click += new System.EventHandler(this.assignSelectedImagesMenuItem_Click);
+      // 
+      // imageMenu
+      // 
+      imageMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            assignToMenuItem,
+            renameImageMenuItem,
+            deleteImageMenuItem,
+            menuSep3,
+            rotateImageCC90,
+            rotateImageC90,
+            rotateImage180,
+            menuSep4,
+            selectAllImagesMenuItem,
+            selectImagesInGroupMenuItem});
+      imageMenu.Name = "imageMenu";
+      imageMenu.ShowImageMargin = false;
+      imageMenu.Size = new System.Drawing.Size(189, 214);
+      imageMenu.Opening += new System.ComponentModel.CancelEventHandler(this.imageMenu_Opening);
+      // 
+      // assignToMenuItem
+      // 
+      assignToMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            assignToNoGroupMenuItem});
+      assignToMenuItem.Name = "assignToMenuItem";
+      assignToMenuItem.Size = new System.Drawing.Size(188, 22);
+      assignToMenuItem.Text = "&Assign Images To";
+      assignToMenuItem.DropDownOpening += new System.EventHandler(this.assignToMenuItem_DropDownOpening);
+      // 
+      // assignToNoGroupMenuItem
+      // 
+      assignToNoGroupMenuItem.Name = "assignToNoGroupMenuItem";
+      assignToNoGroupMenuItem.Size = new System.Drawing.Size(119, 22);
+      assignToNoGroupMenuItem.Text = "&No Group";
+      assignToNoGroupMenuItem.Click += new System.EventHandler(this.assignToGroupMenuItem_Click);
+      // 
+      // renameImageMenuItem
+      // 
+      renameImageMenuItem.Name = "renameImageMenuItem";
+      renameImageMenuItem.Size = new System.Drawing.Size(188, 22);
+      renameImageMenuItem.Text = "&Rename Images";
+      renameImageMenuItem.Click += new System.EventHandler(this.renameImageMenuItem_Click);
+      // 
+      // deleteImageMenuItem
+      // 
+      deleteImageMenuItem.Name = "deleteImageMenuItem";
+      deleteImageMenuItem.Size = new System.Drawing.Size(188, 22);
+      deleteImageMenuItem.Text = "&Delete Images";
+      deleteImageMenuItem.Click += new System.EventHandler(this.deleteImageMenuItem_Click);
+      // 
+      // menuSep3
+      // 
+      menuSep3.Name = "menuSep3";
+      menuSep3.Size = new System.Drawing.Size(185, 6);
+      // 
+      // rotateImageCC90
+      // 
+      rotateImageCC90.Name = "rotateImageCC90";
+      rotateImageCC90.Size = new System.Drawing.Size(188, 22);
+      rotateImageCC90.Tag = 270;
+      rotateImageCC90.Text = "Rotate &Counterclockwise 90°";
+      rotateImageCC90.Click += new System.EventHandler(this.rotateImageMenuItem_Click);
+      // 
+      // rotateImageC90
+      // 
+      rotateImageC90.Name = "rotateImageC90";
+      rotateImageC90.Size = new System.Drawing.Size(188, 22);
+      rotateImageC90.Tag = 90;
+      rotateImageC90.Text = "&Rotate Clockwise 90°";
+      rotateImageC90.Click += new System.EventHandler(this.rotateImageMenuItem_Click);
+      // 
+      // rotateImage180
+      // 
+      rotateImage180.Name = "rotateImage180";
+      rotateImage180.Size = new System.Drawing.Size(188, 22);
+      rotateImage180.Tag = 180;
+      rotateImage180.Text = "R&otate 180°";
+      rotateImage180.Click += new System.EventHandler(this.rotateImageMenuItem_Click);
+      // 
+      // menuSep4
+      // 
+      menuSep4.Name = "menuSep4";
+      menuSep4.Size = new System.Drawing.Size(185, 6);
+      // 
+      // selectAllImagesMenuItem
+      // 
+      selectAllImagesMenuItem.Name = "selectAllImagesMenuItem";
+      selectAllImagesMenuItem.Size = new System.Drawing.Size(188, 22);
+      selectAllImagesMenuItem.Text = "&Select All Images";
+      selectAllImagesMenuItem.Click += new System.EventHandler(this.selectAllImagesMenuItem_Click);
+      // 
+      // selectImagesInGroupMenuItem
+      // 
+      selectImagesInGroupMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            selectNoGroupMenuItem});
+      selectImagesInGroupMenuItem.Name = "selectImagesInGroupMenuItem";
+      selectImagesInGroupMenuItem.Size = new System.Drawing.Size(188, 22);
+      selectImagesInGroupMenuItem.Text = "Select Images in Group";
+      selectImagesInGroupMenuItem.DropDownOpening += new System.EventHandler(this.selectImagesInGroupMenuItem_DropDownOpening);
+      // 
+      // selectNoGroupMenuItem
+      // 
+      selectNoGroupMenuItem.Name = "selectNoGroupMenuItem";
+      selectNoGroupMenuItem.Size = new System.Drawing.Size(152, 22);
+      selectNoGroupMenuItem.Text = "&No Group";
+      selectNoGroupMenuItem.Click += new System.EventHandler(this.selectGroupImagesMenuItem_Click);
       // 
       // hsplit
       // 
@@ -359,8 +527,8 @@ namespace PictureSorter
       // hsplit.Panel2
       // 
       this.hsplit.Panel2.Controls.Add(this.picture);
-      this.hsplit.Size = new System.Drawing.Size(592, 583);
-      this.hsplit.SplitterDistance = 351;
+      this.hsplit.Size = new System.Drawing.Size(592, 588);
+      this.hsplit.SplitterDistance = 354;
       this.hsplit.TabIndex = 0;
       // 
       // progress
@@ -380,6 +548,7 @@ namespace PictureSorter
             | System.Windows.Forms.AnchorStyles.Right)));
       this.lstFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.colName});
+      this.lstFiles.ContextMenuStrip = imageMenu;
       listViewGroup1.Header = "Uncategorized";
       listViewGroup1.Name = "Uncategorized";
       this.lstFiles.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
@@ -390,7 +559,7 @@ namespace PictureSorter
       this.lstFiles.Location = new System.Drawing.Point(3, 26);
       this.lstFiles.Name = "lstFiles";
       this.lstFiles.ShowItemToolTips = true;
-      this.lstFiles.Size = new System.Drawing.Size(589, 325);
+      this.lstFiles.Size = new System.Drawing.Size(589, 328);
       this.lstFiles.Sorting = System.Windows.Forms.SortOrder.Ascending;
       this.lstFiles.TabIndex = 0;
       this.lstFiles.UseCompatibleStateImageBehavior = false;
@@ -421,7 +590,7 @@ namespace PictureSorter
       this.picture.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
       this.picture.Location = new System.Drawing.Point(3, 0);
       this.picture.Name = "picture";
-      this.picture.Size = new System.Drawing.Size(589, 225);
+      this.picture.Size = new System.Drawing.Size(589, 227);
       this.picture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
       this.picture.TabIndex = 0;
       this.picture.TabStop = false;
@@ -471,7 +640,7 @@ namespace PictureSorter
       this.vsplit.Panel2.Controls.Add(lblNewSize);
       this.vsplit.Panel2.Controls.Add(sizeDropPic);
       this.vsplit.Panel2.Layout += new System.Windows.Forms.LayoutEventHandler(this.vsplit_Panel2_Layout);
-      this.vsplit.Size = new System.Drawing.Size(792, 583);
+      this.vsplit.Size = new System.Drawing.Size(792, 588);
       this.vsplit.SplitterDistance = 592;
       this.vsplit.TabIndex = 0;
       // 
@@ -656,7 +825,7 @@ namespace PictureSorter
             | System.Windows.Forms.AnchorStyles.Right)));
       this.lstGroups.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             colGroupName});
-      this.lstGroups.ContextMenuStrip = this.groupMenu;
+      this.lstGroups.ContextMenuStrip = groupMenu;
       this.lstGroups.FullRowSelect = true;
       this.lstGroups.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
       this.lstGroups.LabelEdit = true;
@@ -674,40 +843,6 @@ namespace PictureSorter
       this.lstGroups.BeforeLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.lstGroups_BeforeLabelEdit);
       this.lstGroups.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstGroups_KeyDown);
       // 
-      // groupMenu
-      // 
-      this.groupMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            newGroupMenuItem,
-            this.deleteGroupMenuItem,
-            this.renameGroupMenuItem,
-            this.selectGroupMenuItem,
-            menuSep1,
-            this.assignSelectedImagesMenuItem});
-      this.groupMenu.Name = "groupMenu";
-      this.groupMenu.Size = new System.Drawing.Size(189, 120);
-      this.groupMenu.Opening += new System.ComponentModel.CancelEventHandler(this.groupMenu_Opening);
-      // 
-      // deleteGroupMenuItem
-      // 
-      this.deleteGroupMenuItem.Name = "deleteGroupMenuItem";
-      this.deleteGroupMenuItem.Size = new System.Drawing.Size(188, 22);
-      this.deleteGroupMenuItem.Text = "&Delete Group";
-      this.deleteGroupMenuItem.Click += new System.EventHandler(this.deleteGroupMenuItem_Click);
-      // 
-      // renameGroupMenuItem
-      // 
-      this.renameGroupMenuItem.Name = "renameGroupMenuItem";
-      this.renameGroupMenuItem.Size = new System.Drawing.Size(188, 22);
-      this.renameGroupMenuItem.Text = "&Rename Group";
-      this.renameGroupMenuItem.Click += new System.EventHandler(this.renameGroupMenuItem_Click);
-      // 
-      // assignSelectedImagesMenuItem
-      // 
-      this.assignSelectedImagesMenuItem.Name = "assignSelectedImagesMenuItem";
-      this.assignSelectedImagesMenuItem.Size = new System.Drawing.Size(188, 22);
-      this.assignSelectedImagesMenuItem.Text = "&Assign Images to Group";
-      this.assignSelectedImagesMenuItem.Click += new System.EventHandler(this.assignSelectedImagesMenuItem_Click);
-      // 
       // sizeMenu
       // 
       this.sizeMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -717,18 +852,19 @@ namespace PictureSorter
             this.menuSep2,
             this.size4MenuItem});
       this.sizeMenu.Name = "sizeMenu";
-      this.sizeMenu.Size = new System.Drawing.Size(123, 98);
+      this.sizeMenu.ShowImageMargin = false;
+      this.sizeMenu.Size = new System.Drawing.Size(98, 98);
       // 
       // menuSep2
       // 
       this.menuSep2.Name = "menuSep2";
-      this.menuSep2.Size = new System.Drawing.Size(119, 6);
+      this.menuSep2.Size = new System.Drawing.Size(94, 6);
       this.menuSep2.Click += new System.EventHandler(this.sizeMenuItem_Click);
       // 
       // size4MenuItem
       // 
       this.size4MenuItem.Name = "size4MenuItem";
-      this.size4MenuItem.Size = new System.Drawing.Size(122, 22);
+      this.size4MenuItem.Size = new System.Drawing.Size(97, 22);
       this.size4MenuItem.Text = "0x160";
       this.size4MenuItem.Click += new System.EventHandler(this.sizeMenuItem_Click);
       // 
@@ -736,7 +872,7 @@ namespace PictureSorter
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.ClientSize = new System.Drawing.Size(792, 583);
+      this.ClientSize = new System.Drawing.Size(792, 588);
       this.Controls.Add(this.vsplit);
       this.Enabled = false;
       this.HelpButton = true;
@@ -748,6 +884,8 @@ namespace PictureSorter
       tools.ResumeLayout(false);
       tools.PerformLayout();
       ((System.ComponentModel.ISupportInitialize)(sizeDropPic)).EndInit();
+      groupMenu.ResumeLayout(false);
+      imageMenu.ResumeLayout(false);
       this.hsplit.Panel1.ResumeLayout(false);
       this.hsplit.Panel1.PerformLayout();
       this.hsplit.Panel2.ResumeLayout(false);
@@ -757,7 +895,6 @@ namespace PictureSorter
       this.vsplit.Panel2.ResumeLayout(false);
       this.vsplit.Panel2.PerformLayout();
       this.vsplit.ResumeLayout(false);
-      this.groupMenu.ResumeLayout(false);
       this.sizeMenu.ResumeLayout(false);
       this.ResumeLayout(false);
 
@@ -769,7 +906,6 @@ namespace PictureSorter
     private System.Windows.Forms.PictureBox picture;
     private System.Windows.Forms.ListView lstGroups;
     private System.Windows.Forms.CheckBox chkAutoRename;
-    private System.Windows.Forms.ContextMenuStrip groupMenu;
     private System.Windows.Forms.ToolStripMenuItem deleteGroupMenuItem;
     private System.Windows.Forms.ToolStripMenuItem renameGroupMenuItem;
     private System.Windows.Forms.ColumnHeader colName;
@@ -795,9 +931,9 @@ namespace PictureSorter
     private System.Windows.Forms.TextBox txtIndex;
     private System.Windows.Forms.ToolStripMenuItem selectGroupMenuItem;
     private System.Windows.Forms.ToolStripMenuItem assignSelectedImagesMenuItem;
-    private System.Windows.Forms.ContextMenuStrip sizeMenu;
     private System.Windows.Forms.ToolStripSeparator menuSep2;
     private System.Windows.Forms.ToolStripMenuItem size4MenuItem;
+    private System.Windows.Forms.ContextMenuStrip sizeMenu;
 
 
   }
