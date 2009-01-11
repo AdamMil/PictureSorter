@@ -39,7 +39,9 @@ partial class MainForm : Form
   public MainForm()
   {
     InitializeComponent();
+
     Icon = Properties.Resources.CameraIcon;
+    openImagesTool.Image = Properties.Resources.OpenIcon.ToBitmap();
     iconTool.Image = Icon.ToBitmap();
 
     vsplit.Panel1MinSize = 380;
@@ -450,6 +452,16 @@ partial class MainForm : Form
           default: return string.Empty;
         }
       }));
+  }
+
+  void CropImage()
+  {
+    if(lstFiles.SelectedItems.Count == 1)
+    {
+      FileItem item = (FileItem)lstFiles.SelectedItems[0];
+      CropImageForm form = new CropImageForm(GetCachedImage(item));
+      if(form.ShowDialog() == DialogResult.OK) SetCachedImage(item, form.Image, true);
+    }
   }
 
   void DeleteGroup(int index)
@@ -1431,6 +1443,10 @@ partial class MainForm : Form
     {
       SelectAllImages();
     }
+    else if(e.KeyCode == Keys.C && e.Modifiers == Keys.Control)
+    {
+      CropImage();
+    }
   }
 
   void lstFiles_BeforeLabelEdit(object sender, LabelEditEventArgs e)
@@ -1465,6 +1481,7 @@ partial class MainForm : Form
   void lstFiles_SelectedIndexChanged(object sender, EventArgs e)
   {
     UpdatePictureBox();
+    cropTool.Enabled = lstFiles.SelectedItems.Count == 1;
   }
 
   void btnResize_Click(object sender, EventArgs e)
@@ -1615,6 +1632,8 @@ partial class MainForm : Form
       }
       else item.Enabled = enabled;
     }
+
+    cropImageMenuItem.Enabled = lstFiles.SelectedItems.Count == 1;
   }
 
   void assignToMenuItem_DropDownOpening(object sender, EventArgs e)
@@ -1656,6 +1675,16 @@ partial class MainForm : Form
   void selectGroupImagesMenuItem_Click(object sender, EventArgs e)
   {
     SelectGroup((int)((ToolStripMenuItem)sender).Tag, Control.ModifierKeys == Keys.Shift);
+  }
+
+  void cropImageMenuItem_Click(object sender, EventArgs e)
+  {
+    CropImage();
+  }
+
+  void cropTool_Click(object sender, EventArgs e)
+  {
+    CropImage();
   }
 
   readonly LinkedList<KeyValuePair<FileItem, Image>> imageCache = new LinkedList<KeyValuePair<FileItem,Image>>();
