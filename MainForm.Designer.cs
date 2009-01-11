@@ -359,8 +359,8 @@ namespace PictureSorter
       // hsplit.Panel2
       // 
       this.hsplit.Panel2.Controls.Add(this.picture);
-      this.hsplit.Size = new System.Drawing.Size(592, 588);
-      this.hsplit.SplitterDistance = 355;
+      this.hsplit.Size = new System.Drawing.Size(592, 583);
+      this.hsplit.SplitterDistance = 351;
       this.hsplit.TabIndex = 0;
       // 
       // progress
@@ -390,7 +390,7 @@ namespace PictureSorter
       this.lstFiles.Location = new System.Drawing.Point(3, 26);
       this.lstFiles.Name = "lstFiles";
       this.lstFiles.ShowItemToolTips = true;
-      this.lstFiles.Size = new System.Drawing.Size(589, 329);
+      this.lstFiles.Size = new System.Drawing.Size(589, 325);
       this.lstFiles.Sorting = System.Windows.Forms.SortOrder.Ascending;
       this.lstFiles.TabIndex = 0;
       this.lstFiles.UseCompatibleStateImageBehavior = false;
@@ -398,6 +398,7 @@ namespace PictureSorter
       this.lstFiles.SelectedIndexChanged += new System.EventHandler(this.lstFiles_SelectedIndexChanged);
       this.lstFiles.BeforeLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.lstFiles_BeforeLabelEdit);
       this.lstFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstFiles_KeyDown);
+      this.lstFiles.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.lstFiles_ItemDrag);
       // 
       // colName
       // 
@@ -420,7 +421,7 @@ namespace PictureSorter
       this.picture.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
       this.picture.Location = new System.Drawing.Point(3, 0);
       this.picture.Name = "picture";
-      this.picture.Size = new System.Drawing.Size(589, 226);
+      this.picture.Size = new System.Drawing.Size(589, 225);
       this.picture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
       this.picture.TabIndex = 0;
       this.picture.TabStop = false;
@@ -470,7 +471,7 @@ namespace PictureSorter
       this.vsplit.Panel2.Controls.Add(lblNewSize);
       this.vsplit.Panel2.Controls.Add(sizeDropPic);
       this.vsplit.Panel2.Layout += new System.Windows.Forms.LayoutEventHandler(this.vsplit_Panel2_Layout);
-      this.vsplit.Size = new System.Drawing.Size(792, 588);
+      this.vsplit.Size = new System.Drawing.Size(792, 583);
       this.vsplit.SplitterDistance = 592;
       this.vsplit.TabIndex = 0;
       // 
@@ -735,12 +736,12 @@ namespace PictureSorter
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.ClientSize = new System.Drawing.Size(792, 588);
+      this.ClientSize = new System.Drawing.Size(792, 583);
       this.Controls.Add(this.vsplit);
       this.Enabled = false;
       this.HelpButton = true;
       this.KeyPreview = true;
-      this.MinimumSize = new System.Drawing.Size(600, 590);
+      this.MinimumSize = new System.Drawing.Size(600, 610);
       this.Name = "MainForm";
       this.Text = "Picture Sorter by Adam Milazzo";
       this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
