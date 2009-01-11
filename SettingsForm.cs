@@ -12,6 +12,11 @@ public partial class SettingsForm : Form
     InitializeComponent();
   }
 
+  public bool CopyAllImages
+  {
+    get { return chkCopyAll.Checked; }
+  }
+
   public string[] Pictures
   {
     get { return pics; } 

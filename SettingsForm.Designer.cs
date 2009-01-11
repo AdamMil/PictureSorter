@@ -37,6 +37,7 @@ namespace PictureSorter
       this.btnOK = new System.Windows.Forms.Button();
       this.txtPics = new System.Windows.Forms.TextBox();
       this.txtOutputDir = new System.Windows.Forms.TextBox();
+      this.chkCopyAll = new System.Windows.Forms.CheckBox();
       lblPics = new System.Windows.Forms.Label();
       btnBrowsePics = new System.Windows.Forms.Button();
       btnBrowseOutput = new System.Windows.Forms.Button();
@@ -50,7 +51,7 @@ namespace PictureSorter
       lblPics.Name = "lblPics";
       lblPics.Size = new System.Drawing.Size(80, 17);
       lblPics.TabIndex = 0;
-      lblPics.Text = "Pictures to edit:";
+      lblPics.Text = "&Pictures to edit:";
       lblPics.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
       // 
       // btnBrowsePics
@@ -79,7 +80,7 @@ namespace PictureSorter
       label1.Name = "label1";
       label1.Size = new System.Drawing.Size(88, 17);
       label1.TabIndex = 3;
-      label1.Text = "Output directory:";
+      label1.Text = "Output &directory:";
       label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
       // 
       // btnQuit
@@ -119,6 +120,15 @@ namespace PictureSorter
       this.txtOutputDir.Size = new System.Drawing.Size(321, 20);
       this.txtOutputDir.TabIndex = 4;
       // 
+      // chkCopyAll
+      // 
+      this.chkCopyAll.Location = new System.Drawing.Point(88, 60);
+      this.chkCopyAll.Name = "chkCopyAll";
+      this.chkCopyAll.Size = new System.Drawing.Size(201, 19);
+      this.chkCopyAll.TabIndex = 8;
+      this.chkCopyAll.Text = "&Copy all images to output directory";
+      this.chkCopyAll.UseVisualStyleBackColor = true;
+      // 
       // SettingsForm
       // 
       this.AcceptButton = this.btnOK;
@@ -126,6 +136,7 @@ namespace PictureSorter
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.CancelButton = btnQuit;
       this.ClientSize = new System.Drawing.Size(495, 91);
+      this.Controls.Add(this.chkCopyAll);
       this.Controls.Add(this.btnOK);
       this.Controls.Add(btnQuit);
       this.Controls.Add(btnBrowseOutput);
@@ -151,5 +162,6 @@ namespace PictureSorter
     private System.Windows.Forms.TextBox txtPics;
     private System.Windows.Forms.TextBox txtOutputDir;
     private System.Windows.Forms.Button btnOK;
+    private System.Windows.Forms.CheckBox chkCopyAll;
   }
 }
