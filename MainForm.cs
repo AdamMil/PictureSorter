@@ -181,8 +181,7 @@ partial class MainForm : Form
 
   void CleanupCache()
   {
-    // use up to 100 mb for the cache, and leave at least one item (the one we're operating upon) in it
-    while(cacheSize > 100*1024*1024 && imageCache.Count > 1)
+    while(cacheSize > maxCacheSize && imageCache.Count > 1) // leave at least one item (the one we're operating upon)
     {
       LinkedListNode<KeyValuePair<FileItem, Image>> node = imageCache.Last;
       SaveItem(node.Value.Key, node.Value.Value);
@@ -268,36 +267,32 @@ partial class MainForm : Form
   {
     if(string.IsNullOrEmpty(namingScheme)) return path;
 
-    string directory = Path.GetDirectoryName(path), filename = Path.GetFileNameWithoutExtension(path);
-    string extension = Path.GetExtension(path);
+    string filename = Path.GetFileNameWithoutExtension(path), extension = Path.GetExtension(path);
 
-    if(directory.Length != 0) // strip the trailing slash from the directory
-    {
-      char lastChar = directory[directory.Length-1];
-      if(lastChar == Path.DirectorySeparatorChar || lastChar == Path.AltDirectorySeparatorChar)
+    return Path.Combine(outputDir,
+      renameRe.Replace(namingScheme, delegate(Match m)
       {
-        directory.Remove(directory.Length-1);
-      }
-    }
-
-    return renameRe.Replace(namingScheme, delegate(Match m)
-    {
-      switch(char.ToLowerInvariant(m.Value[1]))
-      {
-        case '%': return "%";
-        case 'd': return directory;
-        case 'e': return extension;
-        case 'f': return filename;
-        case 'n': return indexNumber++.ToString(CultureInfo.InvariantCulture);
-        default: return string.Empty;
-      }
-    });
+        switch(char.ToLowerInvariant(m.Value[1]))
+        {
+          case '%': return "%";
+          case 'e': return extension;
+          case 'f': return filename;
+          case 'n': return indexNumber++.ToString(CultureInfo.InvariantCulture);
+          default: return string.Empty;
+        }
+      }));
   }
 
   void DeleteGroup(int index)
   {
     if(lstFiles.Groups.Count > index) lstFiles.Groups.RemoveAt(index+1);
     lstGroups.Items.RemoveAt(index);
+
+    // now renumber the groups after it
+    for(int i=index; i<lstGroups.Items.Count; i++)
+    {
+      lstGroups.Items[i].Text = GetGroupIndexText(i) + (string)lstGroups.Items[i].Tag;
+    }
   }
 
   void DeleteImages(bool confirm)
@@ -329,8 +324,9 @@ partial class MainForm : Form
           }
         }
 
-        File.Delete(item.Path);
         item.Remove();
+        File.Delete(item.Path);
+        if(item.HasThumbnail) File.Delete(item.ThumbnailPath);
       }
     }
   }
@@ -388,7 +384,7 @@ partial class MainForm : Form
     }
     else if(index < 20)
     {
-      return "C-" + (index == 19 ? "0" : (index-10+1).ToString(CultureInfo.InvariantCulture)) + ". ";
+      return "C" + (index == 19 ? "0" : (index-10+1).ToString(CultureInfo.InvariantCulture)) + ". ";
     }
     else return "";
   }
@@ -554,6 +550,7 @@ partial class MainForm : Form
         sameFile = AreSameFile(item.ThumbnailPath, newThumbnailPath);
         if(!sameFile || forceMove && !string.Equals(item.ThumbnailPath, newThumbnailPath, StringComparison.Ordinal))
         {
+          Directory.CreateDirectory(Path.GetDirectoryName(newThumbnailPath));
           if(!sameFile) newThumbnailPath = GetUniqueFilename(newThumbnailPath);
           if(File.Exists(item.ThumbnailPath)) File.Move(item.ThumbnailPath, newThumbnailPath);
           item.ThumbnailPath = newThumbnailPath;
@@ -769,13 +766,14 @@ partial class MainForm : Form
   {
     ICollection items = lstFiles.SelectedItems.Count == 0 ? (ICollection)lstFiles.Items : lstFiles.SelectedItems;
 
-    SetupProgress(width >= 0 || height >= 0 ? createThumbnails ? "Thumbnailing..." : "Resizing..." : "Renaming...",
+    SetupProgress(width > 0 || height > 0 ? createThumbnails ? "Thumbnailing..." : "Resizing..." : "Renaming...",
                   items.Count);
 
     foreach(FileItem item in items)
     {
       EnsureOutputFile(item);
       string newPath = CreateFilenameByScheme(item.Path, namingScheme);
+      Directory.CreateDirectory(Path.GetDirectoryName(newPath));
 
       if(width >= 0 || height >= 0)
       {
@@ -1065,42 +1063,60 @@ partial class MainForm : Form
   void lstGroups_AfterLabelEdit(object sender, LabelEditEventArgs e)
   {
     ListViewItem item = lstGroups.Items[e.Item];
-    if(e.Label != null)
+    string oldText = (string)item.Tag, newText = e.Label != null ? e.Label : oldText;
+
+    e.CancelEdit = true; // we'll do the rename ourselves, so don't let the system overwrite our change
+
+    if(e.Label != null && e.Label.Length == 0) // if the name is erased, treat it as a deletion
     {
-      string oldText = item.Text;
-
-      item.Tag = e.Label;
-      item.Text = GetGroupIndexText(item.Index) + e.Label;
-      e.CancelEdit = true; // we've done the rename ourselves, so don't let the system overwrite our change
-
-      if(string.IsNullOrEmpty(e.Label))
-      {
-        DeleteGroup(item.Index);
-      }
-      else if(lstFiles.Groups.Count > item.Index+1)
-      {
-        if(!string.Equals(oldText, (string)e.Label, StringComparison.OrdinalIgnoreCase))
-        {
-          ListViewGroup group = lstFiles.Groups[item.Index+1];
-          group.Name = group.Header = e.Label;
-          if(chkAutoRename.Checked) AssignImagesToGroup(item.Index, group.Items, true);
-        }
-      }
-      else
-      {
-        lstFiles.Groups.Add(e.Label, e.Label);
-      }
+      DeleteGroup(item.Index);
     }
     else
     {
-      item.Text = GetGroupIndexText(item.Index) + item.Text; // edit was canceled
-      e.CancelEdit = true;
+      // make sure there are no other groups with the same name
+      for(int i=0; i<lstGroups.Items.Count; i++)
+      {
+        if(i != item.Index && string.Equals((string)lstGroups.Items[i].Tag, newText, StringComparison.Ordinal))
+        {
+          if(e.Label != null)
+          {
+            MessageBox.Show("A group named '" + newText + "' already exists.", "Duplicate group",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+          }
+
+          // if this was a new group, delete it
+          if(string.Equals(oldText, "NEW GROUP", StringComparison.Ordinal)) lstGroups.Items.RemoveAt(e.Item);
+          else item.Text = GetGroupIndexText(item.Index) + oldText; // otherwise just revert the text
+
+          return;
+        }
+      }
+
+      item.Tag  = newText;
+      item.Text = GetGroupIndexText(item.Index) + newText;
+
+      if(lstFiles.Groups.Count <= item.Index+1) // the group doesn't exist in the image list yet, so add it
+      {
+        lstFiles.Groups.Add(newText, newText);
+      }
+      else if(!string.Equals(oldText, newText, StringComparison.Ordinal)) // if the name actually changed
+      {
+        ListViewGroup group = lstFiles.Groups[item.Index+1];
+        group.Name = group.Header = e.Label;
+        if(chkAutoRename.Checked) AssignImagesToGroup(item.Index, group.Items, true);
+      }
     }
   }
 
   void groupMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
   {
-    renameGroupMenuItem.Enabled = deleteGroupMenuItem.Enabled = lstGroups.SelectedIndices.Count != 0;
+    renameGroupMenuItem.Enabled = deleteGroupMenuItem.Enabled = selectGroupMenuItem.Enabled =
+      assignSelectedImagesMenuItem.Enabled = lstGroups.SelectedIndices.Count != 0;
+
+    if(assignSelectedImagesMenuItem.Enabled && lstFiles.SelectedItems.Count == 0)
+    {
+      assignSelectedImagesMenuItem.Enabled = false;
+    }
   }
 
   void newGroupMenuItem_Click(object sender, EventArgs e)
@@ -1124,6 +1140,11 @@ partial class MainForm : Form
     {
       SelectGroup(lstGroups.SelectedIndices[0], (Control.ModifierKeys & Keys.Shift) != 0);
     }
+  }
+
+  void assignSelectedImagesMenuItem_Click(object sender, EventArgs e)
+  {
+    if(lstGroups.SelectedIndices.Count != 0) AssignImagesToGroup(lstGroups.SelectedIndices[0]);
   }
 
   void lstGroups_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -1162,18 +1183,18 @@ partial class MainForm : Form
     }
   }
 
-  void iconView_Click(object sender, EventArgs e)
+  void iconTool_Click(object sender, EventArgs e)
   {
-    lstFiles.View = View.LargeIcon;
-    iconView.Checked = true;
-    listView.Checked = false;
-  }
-
-  void listView_Click(object sender, EventArgs e)
-  {
-    lstFiles.View = View.List;
-    iconView.Checked = false;
-    listView.Checked = true;
+    if(lstFiles.View == View.LargeIcon)
+    {
+      lstFiles.View = View.List;
+      iconTool.Text = "Show Icons";
+    }
+    else
+    {
+      lstFiles.View = View.LargeIcon;
+      iconTool.Text = "Hide Icons";
+    }
   }
 
   void openImagesTool_Click(object sender, EventArgs e)
@@ -1186,11 +1207,9 @@ partial class MainForm : Form
     if(e.KeyCode >= Keys.D0 && e.KeyCode <= Keys.D9)
     {
       int groupNum = e.KeyCode == Keys.D0 ? 9 : e.KeyCode - Keys.D1;
-      if(e.Modifiers == Keys.Control)
-      {
-        groupNum += 10;
-      }
-      else if(e.Modifiers == Keys.Alt || e.Modifiers == (Keys.Alt|Keys.Shift))
+      if((e.Modifiers & Keys.Control) != 0) groupNum += 10;
+
+      if(e.Modifiers == Keys.Alt || e.Modifiers == (Keys.Alt|Keys.Shift))
       {
         SelectGroup(groupNum, e.Modifiers == (Keys.Alt|Keys.Shift));
       }
@@ -1306,7 +1325,7 @@ partial class MainForm : Form
     if(string.IsNullOrEmpty(txtHeight.Text.Trim())) height = 0;
     else if(!int.TryParse(txtHeight.Text, out height)) height = -1;
 
-    chkCreateThumbnails.Enabled = width >= 0 || height >= 0;
+    chkCreateThumbnails.Enabled = width > 0 || height > 0;
     chkDetectRotated.Enabled = width > 0 && height > 0;
 
     if(!chkCreateThumbnails.Enabled) chkCreateThumbnails.Checked = false;
@@ -1334,7 +1353,7 @@ partial class MainForm : Form
 
     if(chkCreateThumbnails.Checked)
     {
-      if(string.Equals(txtNamingScheme.Text, @"%d\%f%e", StringComparison.Ordinal))
+      if(string.Equals(txtNamingScheme.Text, @"%f%e", StringComparison.Ordinal))
       {
         if(string.Equals(txtWidth.Text, "1024", StringComparison.Ordinal) &&
            string.Equals(txtHeight.Text, "768", StringComparison.Ordinal))
@@ -1343,10 +1362,10 @@ partial class MainForm : Form
           txtHeight.Text = "160";
         }
 
-        txtNamingScheme.Text = @"%d\%f_t%e";
+        txtNamingScheme.Text = @"%f_t%e";
       }
     }
-    else if(string.Equals(txtNamingScheme.Text, @"%d\%f_t%e", StringComparison.Ordinal))
+    else if(string.Equals(txtNamingScheme.Text, @"%f_t%e", StringComparison.Ordinal))
     {
       if(string.Equals(txtWidth.Text, "", StringComparison.Ordinal) &&
          string.Equals(txtHeight.Text, "160", StringComparison.Ordinal))
@@ -1356,17 +1375,49 @@ partial class MainForm : Form
         chkDetectRotated.Checked = chkDetectRotated.Enabled;
       }
 
-      txtNamingScheme.Text = @"%d\%f%e";
+      txtNamingScheme.Text = @"%f%e";
     }
 
     chkOverwriteThumbnails.Enabled = chkCreateThumbnails.Checked;
+  }
+
+  void txtCacheSize_Leave(object sender, EventArgs e)
+  {
+    int size;
+    if(!int.TryParse(txtCacheSize.Text, out size) || size < 0 || size > 1024)
+    {
+      MessageBox.Show("'" + txtCacheSize.Text + "' is not a valid cache size. Please enter a number from 0 to 1024",
+                      "Invalid cache size", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      txtCacheSize.Focus();
+      return;
+    }
+
+    size *= 1024*1024;
+
+    bool cleanupCache = size < maxCacheSize;
+    maxCacheSize = size;
+    if(cleanupCache) CleanupCache();
+  }
+
+  void sizeDropPic_Click(object sender, EventArgs e)
+  {
+    sizeMenu.Show((Control)sender, 0, 0);
+  }
+
+  void sizeMenuItem_Click(object sender, EventArgs e)
+  {
+    ToolStripMenuItem item = (ToolStripMenuItem)sender;
+    string text = item.Text;
+    int xPos = text.IndexOf('x');
+    txtWidth.Text  = text.Substring(0, xPos);
+    txtHeight.Text = text.Substring(xPos+1);
   }
 
   readonly LinkedList<KeyValuePair<FileItem, Image>> imageCache = new LinkedList<KeyValuePair<FileItem,Image>>();
   Thread iconThread, saveThread;
   string outputDir;
   ManualResetEvent quitEvent = new ManualResetEvent(false);
-  int cacheSize, indexNumber;
+  int maxCacheSize=100*1024*1024, cacheSize, indexNumber;
   bool quitting;
 
   static Regex renameRe = new Regex(@"%[defn%]", RegexOptions.IgnoreCase | RegexOptions.Singleline);

@@ -32,7 +32,7 @@ namespace PictureSorter
       System.Windows.Forms.Button btnBrowsePics;
       System.Windows.Forms.Button btnBrowseOutput;
       System.Windows.Forms.Label label1;
-      System.Windows.Forms.Button btnQuit;
+      System.Windows.Forms.Button btnCancel;
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
       this.btnOK = new System.Windows.Forms.Button();
       this.txtPics = new System.Windows.Forms.TextBox();
@@ -42,7 +42,7 @@ namespace PictureSorter
       btnBrowsePics = new System.Windows.Forms.Button();
       btnBrowseOutput = new System.Windows.Forms.Button();
       label1 = new System.Windows.Forms.Label();
-      btnQuit = new System.Windows.Forms.Button();
+      btnCancel = new System.Windows.Forms.Button();
       this.SuspendLayout();
       // 
       // lblPics
@@ -83,16 +83,16 @@ namespace PictureSorter
       label1.Text = "Output &directory:";
       label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
       // 
-      // btnQuit
+      // btnCancel
       // 
-      btnQuit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-      btnQuit.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-      btnQuit.Location = new System.Drawing.Point(415, 63);
-      btnQuit.Name = "btnQuit";
-      btnQuit.Size = new System.Drawing.Size(75, 23);
-      btnQuit.TabIndex = 7;
-      btnQuit.Text = "Quit";
-      btnQuit.UseVisualStyleBackColor = true;
+      btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+      btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+      btnCancel.Location = new System.Drawing.Point(415, 63);
+      btnCancel.Name = "btnCancel";
+      btnCancel.Size = new System.Drawing.Size(75, 23);
+      btnCancel.TabIndex = 7;
+      btnCancel.Text = "Cancel";
+      btnCancel.UseVisualStyleBackColor = true;
       // 
       // btnOK
       // 
@@ -134,11 +134,11 @@ namespace PictureSorter
       this.AcceptButton = this.btnOK;
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-      this.CancelButton = btnQuit;
+      this.CancelButton = btnCancel;
       this.ClientSize = new System.Drawing.Size(495, 91);
       this.Controls.Add(this.chkCopyAll);
       this.Controls.Add(this.btnOK);
-      this.Controls.Add(btnQuit);
+      this.Controls.Add(btnCancel);
       this.Controls.Add(btnBrowseOutput);
       this.Controls.Add(this.txtOutputDir);
       this.Controls.Add(label1);
@@ -151,7 +151,7 @@ namespace PictureSorter
       this.MinimizeBox = false;
       this.Name = "SettingsForm";
       this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-      this.Text = "Settings";
+      this.Text = "Open Images";
       this.ResumeLayout(false);
       this.PerformLayout();
 
