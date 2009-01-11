@@ -133,7 +133,7 @@ namespace PictureSorter
       tools.Location = new System.Drawing.Point(55, 0);
       tools.Name = "tools";
       tools.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-      tools.Size = new System.Drawing.Size(133, 25);
+      tools.Size = new System.Drawing.Size(117, 25);
       tools.TabIndex = 1;
       // 
       // openImagesTool
@@ -147,10 +147,9 @@ namespace PictureSorter
       // 
       // iconTool
       // 
-      this.iconTool.Image = ((System.Drawing.Image)(resources.GetObject("iconTool.Image")));
       this.iconTool.ImageTransparentColor = System.Drawing.Color.Magenta;
       this.iconTool.Name = "iconTool";
-      this.iconTool.Size = new System.Drawing.Size(77, 22);
+      this.iconTool.Size = new System.Drawing.Size(61, 22);
       this.iconTool.Text = "Hide Icons";
       this.iconTool.Click += new System.EventHandler(this.iconTool_Click);
       // 
@@ -740,11 +739,10 @@ namespace PictureSorter
       this.Controls.Add(this.vsplit);
       this.Enabled = false;
       this.HelpButton = true;
-      this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
       this.KeyPreview = true;
       this.MinimumSize = new System.Drawing.Size(600, 590);
       this.Name = "MainForm";
-      this.Text = "Picture Sorter";
+      this.Text = "Picture Sorter by Adam Milazzo";
       this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
       tools.ResumeLayout(false);
       tools.PerformLayout();
