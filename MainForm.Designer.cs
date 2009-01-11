@@ -305,9 +305,9 @@ namespace PictureSorter
       // sizeDropPic
       // 
       sizeDropPic.Image = ((System.Drawing.Image)(resources.GetObject("sizeDropPic.Image")));
-      sizeDropPic.Location = new System.Drawing.Point(139, 329);
+      sizeDropPic.Location = new System.Drawing.Point(139, 332);
       sizeDropPic.Name = "sizeDropPic";
-      sizeDropPic.Size = new System.Drawing.Size(17, 10);
+      sizeDropPic.Size = new System.Drawing.Size(11, 6);
       sizeDropPic.TabIndex = 44;
       sizeDropPic.TabStop = false;
       sizeDropPic.Click += new System.EventHandler(this.sizeDropPic_Click);
