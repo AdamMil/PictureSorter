@@ -27,6 +27,7 @@ using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Threading;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -63,7 +64,152 @@ partial class MainForm : Form
 
   const int DefaultGroup = -1, IgnoreGroup = -2;
 
-  class FileItem : ListViewItem
+  #region DraggedItems
+  sealed class DraggedItems : IDataObject
+  {
+    public DraggedItems(MainForm form, ICollection items)
+    {
+      this.form  = form;
+      this.items = new FileItem[items.Count];
+      items.CopyTo(this.items, 0);
+    }
+
+    public object GetData(Type format)
+    {
+      if(format == typeof(string)) return GetTextData();
+      else if(typeof(Image).IsAssignableFrom(format)) return GetImage();
+      else return null;
+    }
+
+    public object GetData(string format)
+    {
+      return GetData(format, false);
+    }
+
+    public object GetData(string format, bool autoConvert)
+    {
+      if(string.Equals(format, DataFormats.StringFormat, StringComparison.Ordinal) ||
+         string.Equals(format, DataFormats.UnicodeText, StringComparison.Ordinal))
+      {
+        return GetTextData();
+      }
+      else if(string.Equals(format, DataFormats.FileDrop, StringComparison.Ordinal))
+      {
+        return GetFilenames();
+      }
+      else if(items.Length == 1 && string.Equals(format, DataFormats.Bitmap, StringComparison.Ordinal))
+      {
+        return GetImage();
+      }
+      else if(autoConvert)
+      {
+        Encoding encoding = null;
+
+        if(string.Equals(format, DataFormats.OemText, StringComparison.Ordinal))
+        {
+          encoding = Encoding.GetEncoding(CultureInfo.InstalledUICulture.TextInfo.OEMCodePage);
+        }
+        else if(string.Equals(format, DataFormats.Text, StringComparison.Ordinal))
+        {
+          encoding = Encoding.ASCII;
+        }
+
+        if(encoding != null) return encoding.GetBytes(GetTextData());
+      }
+
+      return null;
+    }
+
+    public bool GetDataPresent(Type format)
+    {
+      return format == typeof(string) || typeof(Image).IsAssignableFrom(format);
+    }
+
+    public bool GetDataPresent(string format)
+    {
+      return items.Length == 1 && string.Equals(format, DataFormats.Bitmap, StringComparison.Ordinal) ||
+             string.Equals(format, DataFormats.FileDrop, StringComparison.Ordinal) ||
+             string.Equals(format, DataFormats.StringFormat, StringComparison.Ordinal) ||
+             string.Equals(format, DataFormats.UnicodeText, StringComparison.Ordinal);
+    }
+
+    public bool GetDataPresent(string format, bool autoConvert)
+    {
+      return GetDataPresent(format) || autoConvert &&
+             (string.Equals(format, DataFormats.OemText, StringComparison.Ordinal) ||
+              string.Equals(format, DataFormats.Text, StringComparison.Ordinal));
+    }
+
+    public string[] GetFormats()
+    {
+      return GetFormats(false);
+    }
+
+    public string[] GetFormats(bool autoConvert)
+    {
+      List<string> formats = new List<string>();
+      formats.Add(DataFormats.UnicodeText);
+      formats.Add(DataFormats.StringFormat);
+      if(autoConvert)
+      {
+        formats.Add(DataFormats.OemText);
+        formats.Add(DataFormats.Text);
+      }
+      if(items.Length == 1) formats.Add(DataFormats.Bitmap);
+      formats.Add(DataFormats.FileDrop);
+      return formats.ToArray();
+    }
+
+    string GetTextData()
+    {
+      StringBuilder sb = new StringBuilder();
+      foreach(FileItem item in items)
+      {
+        if(sb.Length != 0 && items.Length != 1) sb.Append('\n');
+        sb.Append(item.Path);
+      }
+      return sb.ToString();
+    }
+
+    string[] GetFilenames()
+    {
+      string[] filenames = new string[items.Length];
+      for(int i=0; i<items.Length; i++) filenames[i] = items[i].Path;
+      return filenames;
+    }
+
+    Image GetImage()
+    {
+      return form.GetCachedImage(items[0]);
+    }
+
+    void IDataObject.SetData(object data)
+    {
+      throw new NotSupportedException();
+    }
+
+    void IDataObject.SetData(Type format, object data)
+    {
+      throw new NotSupportedException();
+    }
+
+    void IDataObject.SetData(string format, object data)
+    {
+      throw new NotSupportedException();
+    }
+
+    void IDataObject.SetData(string format, bool autoConvert, object data)
+    {
+      throw new NotSupportedException();
+    }
+
+    readonly MainForm form;
+    readonly FileItem[] items;
+  }
+  #endregion
+
+  #region FileItem
+  sealed class FileItem : ListViewItem
   {
     public FileItem(string path)
     {
@@ -164,6 +310,7 @@ partial class MainForm : Form
     ImageFormat format;
     bool badImage, imageChanged, hasIcon, thumbnailChanged;
   }
+  #endregion
 
   static bool AreSameFile(string file1, string file2)
   {
@@ -1424,6 +1571,14 @@ partial class MainForm : Form
     int xPos = text.IndexOf('x');
     txtWidth.Text  = text.Substring(0, xPos);
     txtHeight.Text = text.Substring(xPos+1);
+  }
+
+  void lstFiles_ItemDrag(object sender, ItemDragEventArgs e)
+  {
+    if(e.Button == MouseButtons.Left && lstFiles.SelectedItems.Count != 0)
+    {
+      lstFiles.DoDragDrop(new DraggedItems(this, lstFiles.SelectedItems), DragDropEffects.Copy);
+    }
   }
 
   readonly LinkedList<KeyValuePair<FileItem, Image>> imageCache = new LinkedList<KeyValuePair<FileItem,Image>>();
