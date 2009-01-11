@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -17,40 +18,28 @@ partial class MainForm : Form
   public MainForm()
   {
     InitializeComponent();
+
+    vsplit.Panel1MinSize = 380;
+    vsplit.Panel2MinSize = 200;
+    vsplit.SplitterDistance = vsplit.Width - 200;
+    hsplit.SplitterDistance = 240;
   }
 
   protected override void OnClosed(EventArgs e)
   {
     base.OnClosed(e);
-    FinishSavingImages();
-    SaveChangedImages();
+    CloseImages();
   }
 
-  protected override void OnLoad(EventArgs e)
+  protected override void OnShown(EventArgs e)
   {
-    base.OnLoad(e);
+    base.OnShown(e);
 
-    SettingsForm form = new SettingsForm();
-    if(form.ShowDialog() == DialogResult.OK)
-    {
-      outputDir = form.OutputDirectory;
-
-      lstFiles.Groups.Add("Uncategorized", "Uncategorized");
-      lstFiles.LargeImageList = new ImageList();
-      lstFiles.LargeImageList.ColorDepth = ColorDepth.Depth24Bit;
-      lstFiles.LargeImageList.ImageSize = new Size(64, 64);
-
-      foreach(string path in form.Pictures) lstFiles.Items.Add(new FileItem(path));
-
-      BeginLoadingThumbnails();
-      BeginSavingImages();
-
-      hsplit.SplitterDistance = hsplit.Width - 200;
-      vsplit.SplitterDistance = 240;
-      Enabled = true;
-    }
+    if(OpenImages()) Enabled = true;
     else Close();
   }
+
+  const int DefaultGroup = -1, IgnoreGroup = -2;
 
   class FileItem : ListViewItem
   {
@@ -58,7 +47,13 @@ partial class MainForm : Form
     {
       originalPath = path;
       Text = FileName;
-      group = -1;
+      group = DefaultGroup;
+    }
+
+    public bool BadImage
+    {
+      get { return badImage; }
+      set { badImage = value; }
     }
 
     public bool Changed
@@ -145,7 +140,7 @@ partial class MainForm : Form
     Size thumbnailSize;
     int group;
     ImageFormat format;
-    bool imageChanged, hasIcon, thumbnailChanged;
+    bool badImage, imageChanged, hasIcon, thumbnailChanged;
   }
 
   static bool AreSameFile(string file1, string file2)
@@ -158,39 +153,23 @@ partial class MainForm : Form
     AssignImagesToGroup(index, lstFiles.SelectedItems, false);
   }
 
-  void AssignImagesToGroup(int index, System.Collections.ICollection items, bool forceReassign)
+  void AssignImagesToGroup(int index, IEnumerable items, bool forceReassign)
   {
-    string groupName = GetGroupFilename(index), sep = groupName.IndexOf(' ') == -1 ? null : " ";
-    if(chkLowerCase.Checked) groupName = groupName.ToLower();
-
-    foreach(FileItem item in items)
+    string groupName = null;
+    if(index != DefaultGroup)
     {
-      if(item.GroupIndex != index || forceReassign)
-      {
-        string dir = outputDir;
-        if(chkCreateGroupDirs.Checked)
-        {
-          dir = Path.Combine(dir, groupName);
-          Directory.CreateDirectory(dir);
-        }
-
-        string newPath = chkAutoRename.Checked
-          ? GetUniqueFilename(Path.Combine(dir, groupName + Path.GetExtension(item.FileName)), sep, true)
-          : GetUniqueFilename(Path.Combine(dir, item.FileName));
-
-        MoveItem(item, newPath);
-        item.GroupIndex = index;
-        item.Group = lstFiles.Groups[index+1];
-      }
+      groupName = GetGroupFilename(index);
+      if(chkLowerCase.Checked) groupName = groupName.ToLower();
     }
+    RenameAndRegroupImages(items, groupName, index, forceReassign);
   }
 
-  void BeginLoadingThumbnails()
+  void BeginLoadingIcons()
   {
-    loadThread = new Thread(LoadThumbnails);
-    loadThread.IsBackground = true;
-    loadThread.Priority = ThreadPriority.BelowNormal;
-    loadThread.Start();
+    iconThread = new Thread(LoadIconsInBackground);
+    iconThread.IsBackground = true;
+    iconThread.Priority = ThreadPriority.BelowNormal;
+    iconThread.Start();
   }
 
   void BeginSavingImages()
@@ -202,12 +181,75 @@ partial class MainForm : Form
 
   void CleanupCache()
   {
-    while(cacheSize > 100*1024*1024 && imageCache.Count > 1) // use up to 100 mb for the cache
+    // use up to 100 mb for the cache, and leave at least one item (the one we're operating upon) in it
+    while(cacheSize > 100*1024*1024 && imageCache.Count > 1)
     {
       LinkedListNode<KeyValuePair<FileItem, Image>> node = imageCache.Last;
-      SaveItemImage(node.Value.Key, node.Value.Value);
+      SaveItem(node.Value.Key, node.Value.Value);
       DisposeCacheNode(node);
     }
+  }
+
+  void CloseImages()
+  {
+    StopLoadingIcons();
+    StopSavingImagesInBackground();
+    SaveChangedImages();
+
+    imageCache.Clear();
+    cacheSize = 0;
+
+    lstFiles.Items.Clear();
+    while(lstFiles.Groups.Count > 1) lstFiles.Groups.RemoveAt(1);
+    lstFiles.LargeImageList = null;
+    lstGroups.Items.Clear();
+
+    UpdatePictureBox();
+
+    quitting = false;
+    quitEvent.Reset();
+  }
+
+  void ConvertImages(ImageFormat format, string extension)
+  {
+    if(chkConfirmConvert.Checked &&
+       MessageBox.Show("Convert these images to ." + extension + "?", "Convert images?", MessageBoxButtons.YesNo,
+                       MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1) != DialogResult.Yes)
+    {
+      return;
+    }
+
+    ICollection items = lstFiles.SelectedItems.Count == 0 ? (ICollection)lstFiles.Items : lstFiles.SelectedItems;
+
+    SetupProgress("Converting...", items.Count);
+
+    foreach(FileItem item in items)
+    {
+      ImageFormat itemFormat;
+      if(item.ImageFormat != null)
+      {
+        itemFormat = item.ImageFormat;
+      }
+      else
+      {
+        Image image = GetCachedImage(item);
+        if(image == null) continue;
+        else itemFormat = image.RawFormat;
+      }
+
+      if(!itemFormat.Equals(format))
+      {
+        EnsureOutputFile(item);
+        string filename = Path.Combine(Path.GetDirectoryName(item.Path),
+                                       Path.GetFileNameWithoutExtension(item.Path) + "." + extension);
+        MoveItem(item, filename, true);
+        item.ImageFormat = format;
+        OnImageChanged(item, false);
+      }
+      IncrementProgress();
+    }
+
+    ResetProgress();
   }
 
   void CreateGroup()
@@ -217,6 +259,11 @@ partial class MainForm : Form
     item.BeginEdit();
   }
 
+  Image CreateIcon(Image image)
+  {
+    return ResizeImage(image, 64, 64, true);
+  }
+
   string CreateFilenameByScheme(string path, string namingScheme)
   {
     if(string.IsNullOrEmpty(namingScheme)) return path;
@@ -224,12 +271,12 @@ partial class MainForm : Form
     string directory = Path.GetDirectoryName(path), filename = Path.GetFileNameWithoutExtension(path);
     string extension = Path.GetExtension(path);
 
-    if(directory.Length != 0)
+    if(directory.Length != 0) // strip the trailing slash from the directory
     {
       char lastChar = directory[directory.Length-1];
-      if(lastChar != Path.DirectorySeparatorChar && lastChar != Path.AltDirectorySeparatorChar)
+      if(lastChar == Path.DirectorySeparatorChar || lastChar == Path.AltDirectorySeparatorChar)
       {
-        directory += Path.DirectorySeparatorChar.ToString();
+        directory.Remove(directory.Length-1);
       }
     }
 
@@ -245,60 +292,6 @@ partial class MainForm : Form
         default: return string.Empty;
       }
     });
-  }
-
-  Image CreateThumbnail(Image image, int width, int height, Color fillColor, bool highQuality)
-  {
-    double idealAspect = height == 0 ? 0 : (double)width / height;
-
-    Bitmap newImage = null;
-    double aspectRatio = (double)image.Width / image.Height;
-    int newWidth, newHeight;
-
-    if(width == 0 || height != 0 && aspectRatio < idealAspect)
-    {
-      newWidth  = (int)Math.Round(height * aspectRatio);
-      newHeight = height;
-    }
-    else
-    {
-      newWidth  = width;
-      newHeight = (int)Math.Round(width / aspectRatio);
-    }
-
-    newImage = fillColor == Color.Transparent ? new Bitmap(newWidth, newHeight, PixelFormat.Format24bppRgb)
-                                              : new Bitmap(width, height, PixelFormat.Format24bppRgb);
-    if(image.PixelFormat == PixelFormat.Format1bppIndexed || image.PixelFormat == PixelFormat.Format4bppIndexed ||
-       image.PixelFormat == PixelFormat.Format8bppIndexed)
-    {
-      newImage.Palette = image.Palette; // copy the palette, if there is one
-    }
-
-    using(Graphics g = Graphics.FromImage(newImage))
-    {
-      g.CompositingMode = CompositingMode.SourceCopy;
-      if(highQuality)
-      {
-        g.CompositingQuality = CompositingQuality.HighQuality;
-        g.InterpolationMode  = InterpolationMode.HighQualityBicubic;
-      }
-      else
-      {
-        g.CompositingQuality = CompositingQuality.HighSpeed;
-        g.InterpolationMode  = chkLowQuality.Checked ?
-          InterpolationMode.Bilinear : InterpolationMode.HighQualityBilinear;
-      }
-
-      if(fillColor != Color.Transparent)
-      {
-        using(Brush brush = new SolidBrush(fillColor)) g.FillRectangle(brush, 0, 0, newImage.Width, newImage.Height);
-      }
-
-      g.DrawImage(image, new Rectangle((newImage.Width-newWidth)/2, (newImage.Height-newHeight)/2,
-                                       newWidth, newHeight));
-    }
-
-    return newImage;
   }
 
   void DeleteGroup(int index)
@@ -354,18 +347,7 @@ partial class MainForm : Form
     if(!item.HasOutputFile)
     {
       string newPath = Path.Combine(outputDir, item.FileName);
-      if(!AreSameFile(newPath, item.OriginalPath)) newPath = GetUniqueFilename(newPath);
-      MoveItem(item, newPath);
-    }
-  }
-
-  void FinishSavingImages()
-  {
-    if(saveThread != null)
-    {
-      quitting = true;
-      quitEvent.Set();
-      saveThread.Join();
+      MoveItem(item, newPath, true);
     }
   }
 
@@ -382,17 +364,19 @@ partial class MainForm : Form
     }
 
     Image image = LoadImage(item);
-    imageCache.AddFirst(new KeyValuePair<FileItem, Image>(item, image));
-    cacheSize += GetImageSize(image);
-    CleanupCache();
+    if(image != null)
+    {
+      imageCache.AddFirst(new KeyValuePair<FileItem, Image>(item, image));
+      cacheSize += GetImageSize(image);
+      CleanupCache();
+    }
     return image;
   }
 
   string GetGroupFilename(int index)
   {
-    string filename = (string)lstGroups.Items[index].Tag;
-    foreach(char c in Path.GetInvalidPathChars()) filename = filename.Replace(c.ToString(), "");
-    if(filename.Length == 0) filename = "Group" + (index+1).ToString(CultureInfo.InvariantCulture);
+    string filename = GetSafeFilename((string)lstGroups.Items[index].Tag);
+    if(filename.Length == 0) filename = "Group" + (index+1).ToString(CultureInfo.InvariantCulture) + "_";
     return filename;
   }
 
@@ -444,6 +428,12 @@ partial class MainForm : Form
     return image.Width * image.Height * depth / 8;
   }
 
+  static string GetSafeFilename(string filename)
+  {
+    foreach(char c in Path.GetInvalidFileNameChars()) filename = filename.Replace(c.ToString(), "");
+    return filename;
+  }
+
   static string GetUniqueFilename(string path)
   {
     return GetUniqueFilename(path, null, false);
@@ -470,66 +460,102 @@ partial class MainForm : Form
     Application.DoEvents();
   }
 
-  static Image LoadImage(FileItem item)
+  Image LoadImage(FileItem item)
   {
-    using(FileStream stream = File.OpenRead(item.Path))
-    {
-      Image image = Image.FromStream(stream);
+    if(item.BadImage) return null;
+
+    using(FileStream stream = File.OpenRead(item.Path)) // FIXME: the docs say the stream needs to be kept open
+    {                                                   // (but it seems to work as-is?)
+      Image image;
+      try { image = Image.FromStream(stream); }
+      catch(ArgumentException)
+      {
+        item.BadImage = true;
+        Invoke((ThreadStart)delegate
+        {
+          MessageBox.Show("The file '" + item.FileName + "' is not a valid image file.", "Not an image",
+                          MessageBoxButtons.OK, MessageBoxIcon.Error);
+        });
+        return null;
+      }
+
       if(item.ImageFormat == null) item.ImageFormat = image.RawFormat;
       return image;
     }
   }
 
-  void LoadThumbnails()
+  void LoadIconsInBackground()
   {
-    bool allThumbnailsLoaded;
+    bool allIconsLoaded;
     do
     {
-      allThumbnailsLoaded = true;
-      for(int i=0; i<lstFiles.Items.Count; i++)
+      allIconsLoaded = true;
+      for(int i=0; i<lstFiles.Items.Count && !quitting; i++)
       {
         FileItem item = null;
         lstFiles.Invoke((ThreadStart)delegate { item = (FileItem)lstFiles.Items[i]; });
 
-        if(!item.HasIcon)
+        if(!item.HasIcon && !quitting)
         {
           item.HasIcon = true;
-          Image img, thumbnail;
+
+          Image image, icon;
           try
           {
-            img = LoadImage(item);
-            using(img) thumbnail = CreateThumbnail(img, 64, 64, Color.White, false);
-            lstFiles.Invoke((ThreadStart)delegate
+            image = LoadImage(item);
+            if(image == null)
             {
-              lstFiles.LargeImageList.Images.Add(thumbnail);
-              item.ImageIndex = lstFiles.LargeImageList.Images.Count-1;
-              lstFiles.Invalidate(lstFiles.GetItemRect(item.Index));
-            });
+              lstFiles.Invoke((ThreadStart)delegate
+              {
+                item.ImageIndex = 0;
+                lstFiles.Invalidate(lstFiles.GetItemRect(item.Index));
+              });
+            }
+            else
+            {
+              using(image) icon = CreateIcon(image);
+
+              lstFiles.Invoke((ThreadStart)delegate
+              {
+                lstFiles.LargeImageList.Images.Add(icon);
+                item.ImageIndex = lstFiles.LargeImageList.Images.Count-1;
+                lstFiles.Invalidate(lstFiles.GetItemRect(item.Index));
+              });
+            }
           }
           catch { }
 
-          allThumbnailsLoaded = false;
+          allIconsLoaded = false;
         }
       }
-    } while(!allThumbnailsLoaded);
+    } while(!allIconsLoaded && !quitting);
   }
 
-  void MoveItem(FileItem item, string newPath)
+  void MoveItem(FileItem item, string newPath, bool makeUnique)
   {
-    if(!AreSameFile(item.Path, newPath))
+    MoveItem(item, newPath, makeUnique, false);
+  }
+
+  void MoveItem(FileItem item, string newPath, bool makeUnique, bool forceMove)
+  {
+    bool sameFile = AreSameFile(item.Path, newPath);
+    if(forceMove || !sameFile)
     {
-      if(!item.HasOutputFile) File.Copy(item.OriginalPath, newPath);
-      else File.Move(item.Path, newPath);
+      if(makeUnique && !sameFile) newPath = GetUniqueFilename(newPath);
+
+      if(!item.HasOutputFile && !sameFile) File.Copy(item.OriginalPath, newPath);
+      else if(!sameFile || !string.Equals(item.Path, newPath, StringComparison.Ordinal)) File.Move(item.Path, newPath);
       item.Path = newPath;
       item.Text = item.FileName;
 
-      if(item.HasThumbnail && File.Exists(item.ThumbnailPath))
+      if(item.HasThumbnail)
       {
         string newThumbnailPath = CreateFilenameByScheme(item.Path, item.ThumbnailScheme);
-        if(!AreSameFile(item.ThumbnailPath, newThumbnailPath))
+        sameFile = AreSameFile(item.ThumbnailPath, newThumbnailPath);
+        if(!sameFile || forceMove && !string.Equals(item.ThumbnailPath, newThumbnailPath, StringComparison.Ordinal))
         {
-          newThumbnailPath = GetUniqueFilename(newThumbnailPath);
-          File.Move(item.ThumbnailPath, newThumbnailPath);
+          if(!sameFile) newThumbnailPath = GetUniqueFilename(newThumbnailPath);
+          if(File.Exists(item.ThumbnailPath)) File.Move(item.ThumbnailPath, newThumbnailPath);
           item.ThumbnailPath = newThumbnailPath;
         }
       }
@@ -541,23 +567,122 @@ partial class MainForm : Form
     return new FileInfo(path).FullName.ToLower();
   }
 
-  void OnImageChanged(FileItem item, bool recreateIcon)
+  void OnImageChanged(FileItem item, bool imageContentsChanged)
   {
-    if(recreateIcon)
+    System.Diagnostics.Debug.Assert(!item.BadImage);
+
+    if(imageContentsChanged) // if the image contents changed significantly...
     {
-      lstFiles.LargeImageList.Images[item.ImageIndex] =
-        CreateThumbnail(GetCachedImage(item), 64, 64, Color.White, false);
+      lstFiles.LargeImageList.Images[item.ImageIndex] = CreateIcon(GetCachedImage(item));
+      lstFiles.Invalidate(lstFiles.GetItemRect(item.Index));
+      if(item.Selected && lstFiles.SelectedItems.Count == 1) UpdatePictureBox();
     }
 
-    lstFiles.Invalidate(lstFiles.GetItemRect(item.Index));
     item.ImageChanged = item.ThumbnailChanged = true;
 
-    if(item.Selected && lstFiles.SelectedItems.Count == 1) UpdatePictureBox();
+    if(!chkSaveInBackground.Checked) SaveItem(item);
   }
 
   void OnThumbnailChanged(FileItem item)
   {
+    System.Diagnostics.Debug.Assert(!item.BadImage);
     item.ThumbnailChanged = true;
+    if(!chkSaveInBackground.Checked) SaveItem(item);
+  }
+
+  bool OpenImages()
+  {
+    SettingsForm form = new SettingsForm();
+    if(form.ShowDialog() != DialogResult.OK) return false;
+
+    CloseImages();
+
+    outputDir = form.OutputDirectory;
+
+    lstFiles.LargeImageList = new ImageList();
+    lstFiles.LargeImageList.ColorDepth = ColorDepth.Depth24Bit;
+    lstFiles.LargeImageList.TransparentColor = Color.Magenta;
+    lstFiles.LargeImageList.ImageSize = new Size(64, 64);
+    lstFiles.LargeImageList.Images.Add(Properties.Resources.ErrorImage);
+
+    foreach(string path in form.Pictures) lstFiles.Items.Add(new FileItem(path));
+
+    BeginLoadingIcons();
+    BeginSavingImages();
+    Enabled = true;
+
+    if(form.CopyAllImages)
+    {
+      SetupProgress("Copying images...", lstFiles.Items.Count);
+      foreach(FileItem item in lstFiles.Items)
+      {
+        EnsureOutputFile(item);
+        IncrementProgress();
+      }
+      ResetProgress();
+    }
+    else
+    {
+      // for image files that we're editing directly (ie, that are already in the output directory), set their Path
+      // property so that they will be edited directly rather than copied and renamed
+      foreach(FileItem item in lstFiles.Items)
+      {
+        if(AreSameFile(item.OriginalPath, Path.Combine(outputDir, item.FileName))) item.Path = item.OriginalPath;
+      }
+    }
+
+    return true;
+  }
+
+  void RenameImages()
+  {
+    if(lstFiles.SelectedItems.Count == 1)
+    {
+      lstFiles.SelectedItems[0].BeginEdit();
+    }
+    else if(lstFiles.SelectedItems.Count > 1)
+    {
+      NameDialog form = new NameDialog();
+      if(form.ShowDialog() == DialogResult.OK)
+      {
+        RenameAndRegroupImages(lstFiles.SelectedItems, form.Filename, IgnoreGroup, false);
+      }
+    }
+  }
+
+  void RenameAndRegroupImages(IEnumerable items, string baseName, int groupIndex, bool forceReassign)
+  {
+    string sep = baseName == null || baseName.IndexOf(' ') == -1 ? null : " ";
+    bool useBaseName = baseName != null && (groupIndex == IgnoreGroup || chkAutoRename.Checked);
+
+    foreach(FileItem item in items)
+    {
+      if(groupIndex == IgnoreGroup || item.GroupIndex != groupIndex || forceReassign)
+      {
+        string dir = outputDir;
+
+        if(groupIndex >= 0 && chkCreateGroupDirs.Checked)
+        {
+          dir = Path.Combine(dir, baseName);
+          Directory.CreateDirectory(dir);
+        }
+
+        string newPath = useBaseName ? Path.Combine(dir, baseName + Path.GetExtension(item.FileName))
+                                     : Path.Combine(dir, item.FileName);
+        if(!AreSameFile(newPath, item.Path))
+        {
+          newPath = useBaseName ? GetUniqueFilename(newPath, sep, true) : GetUniqueFilename(newPath);
+        }
+
+        MoveItem(item, newPath, false, true);
+
+        if(groupIndex != IgnoreGroup)
+        {
+          item.GroupIndex = groupIndex;
+          item.Group = groupIndex == DefaultGroup ? null : lstFiles.Groups[groupIndex+1];
+        }
+      }
+    }
   }
 
   void ResetProgress()
@@ -566,10 +691,83 @@ partial class MainForm : Form
     progress.Value = 0;
   }
 
+  Image ResizeImage(Image image, int width, int height, bool isIcon)
+  {
+    double idealAspect = height == 0 ? 0 : (double)width / height;
+
+    Bitmap newImage = null;
+    double aspectRatio = (double)image.Width / image.Height;
+    int newWidth, newHeight;
+
+    if(!isIcon)
+    {
+      // if the image aspect ratio is very nearly equal to the inverse of the desired aspect ratio, assume that the
+      // image has been rotated. in that case, swap the ideal dimensions
+      if(width != 0 && height != 0 && chkDetectRotated.Checked && Math.Abs(idealAspect - 1/aspectRatio) < 0.0001)
+      {
+        int temp = width;
+        width  = height;
+        height = temp;
+        idealAspect = (double)width / height;
+      }
+
+      // skip images that are already smaller than the desired size
+      if(chkSkipSmaller.Checked && (width == 0 || image.Width <= width) && (height == 0 || image.Height <= height))
+      {
+        return image;
+      }
+    }
+
+    // if the image is already the correct size, just return it
+    if(width == image.Width && height == image.Height) return image;
+
+    if(width == 0 || height != 0 && aspectRatio < idealAspect)
+    {
+      newWidth  = (int)Math.Round(height * aspectRatio);
+      newHeight = height;
+    }
+    else
+    {
+      newWidth  = width;
+      newHeight = (int)Math.Round(width / aspectRatio);
+    }
+
+    newImage = isIcon ? new Bitmap(width, height, PixelFormat.Format24bppRgb)
+                      : new Bitmap(newWidth, newHeight, PixelFormat.Format24bppRgb);
+
+    if(image.PixelFormat == PixelFormat.Format1bppIndexed || image.PixelFormat == PixelFormat.Format4bppIndexed ||
+       image.PixelFormat == PixelFormat.Format8bppIndexed)
+    {
+      newImage.Palette = image.Palette; // copy the palette, if there is one
+    }
+
+    using(Graphics g = Graphics.FromImage(newImage))
+    {
+      g.CompositingMode = CompositingMode.SourceCopy;
+
+      if(isIcon)
+      {
+        g.CompositingQuality = CompositingQuality.HighSpeed;
+        g.InterpolationMode  = chkLowQuality.Checked ?
+          InterpolationMode.Bilinear : InterpolationMode.HighQualityBilinear;
+        g.FillRectangle(Brushes.White, 0, 0, newImage.Width, newImage.Height);
+      }
+      else
+      {
+        g.CompositingQuality = CompositingQuality.HighQuality;
+        g.InterpolationMode  = InterpolationMode.HighQualityBicubic;
+      }
+
+      g.DrawImage(image, new Rectangle((newImage.Width-newWidth)/2, (newImage.Height-newHeight)/2,
+                                       newWidth, newHeight));
+    }
+
+    return newImage;
+  }
+
   void ResizeAndRenameFiles(int width, int height, string namingScheme, bool createThumbnails)
   {
-    System.Collections.ICollection items = lstFiles.SelectedItems.Count == 0 ?
-      (System.Collections.ICollection)lstFiles.Items : lstFiles.SelectedItems;
+    ICollection items = lstFiles.SelectedItems.Count == 0 ? (ICollection)lstFiles.Items : lstFiles.SelectedItems;
 
     SetupProgress(width >= 0 || height >= 0 ? createThumbnails ? "Thumbnailing..." : "Resizing..." : "Renaming...",
                   items.Count);
@@ -583,7 +781,11 @@ partial class MainForm : Form
       {
         if(createThumbnails)
         {
-          if(!item.HasThumbnail || !AreSameFile(item.ThumbnailPath, newPath)) newPath = GetUniqueFilename(newPath);
+          if(!chkOverwriteThumbnails.Checked &&
+             (!item.HasThumbnail || !AreSameFile(item.ThumbnailPath, newPath)))
+          {
+            newPath = GetUniqueFilename(newPath);
+          }
           item.ThumbnailScheme = namingScheme;
           item.ThumbnailPath   = newPath;
           item.ThumbnailSize   = new Size(width, height);
@@ -591,17 +793,14 @@ partial class MainForm : Form
         }
         else
         {
+          MoveItem(item, newPath, true);
           Image image = GetCachedImage(item);
-          if(image.Width != width || image.Height != height)
-          {
-            SetCachedImage(item, CreateThumbnail(image, width, height, Color.Transparent, true), false);
-          }
-          if(!AreSameFile(item.Path, newPath)) MoveItem(item, GetUniqueFilename(newPath));
+          if(image != null) SetCachedImage(item, ResizeImage(image, width, height, false), false);
         }
       }
       else
       {
-        if(!AreSameFile(item.Path, newPath)) MoveItem(item, GetUniqueFilename(newPath));
+        MoveItem(item, newPath, true);
       }
 
       IncrementProgress();
@@ -620,14 +819,17 @@ partial class MainForm : Form
       try
       {
         EnsureOutputFile(item);
-        Image img = GetCachedImage(item);
-        switch(degrees)
+        Image image = GetCachedImage(item);
+        if(image != null)
         {
-          case 90: img.RotateFlip(RotateFlipType.Rotate90FlipNone); break;
-          case 180: img.RotateFlip(RotateFlipType.Rotate180FlipNone); break;
-          case 270: img.RotateFlip(RotateFlipType.Rotate270FlipNone); break;
+          switch(degrees)
+          {
+            case 90: image.RotateFlip(RotateFlipType.Rotate90FlipNone); break;
+            case 180: image.RotateFlip(RotateFlipType.Rotate180FlipNone); break;
+            case 270: image.RotateFlip(RotateFlipType.Rotate270FlipNone); break;
+          }
+          OnImageChanged(item, true);
         }
-        OnImageChanged(item, true);
       }
       catch { }
 
@@ -639,40 +841,89 @@ partial class MainForm : Form
 
   void SaveChangedImages()
   {
-    SetupProgress("Saving...", imageCache.Count + lstFiles.Items.Count);
+    Dictionary<string, KeyValuePair<FileItem, Image>> itemsToSave =
+      new Dictionary<string, KeyValuePair<FileItem, Image>>(StringComparer.Ordinal);
 
     for(LinkedListNode<KeyValuePair<FileItem, Image>> node = imageCache.First; node != null; node = node.Next)
     {
-      if(node.Value.Key.Changed) SaveItemImage(node.Value.Key, node.Value.Value);
-      IncrementProgress();
+      if(node.Value.Key.Changed) itemsToSave.Add(node.Value.Key.Path, node.Value);
     }
 
     foreach(FileItem item in lstFiles.Items)
     {
-      if(item.ThumbnailChanged) SaveItemImage(item, null);
-      IncrementProgress();
+      if(item.ThumbnailChanged && !itemsToSave.ContainsKey(item.Path))
+      {
+        itemsToSave.Add(item.Path, new KeyValuePair<FileItem, Image>(item, null));
+      }
     }
 
+    SetupProgress("Saving...", itemsToSave.Count);
+    foreach(KeyValuePair<FileItem,Image> pair in itemsToSave.Values)
+    {
+      SaveItem(pair.Key, pair.Value);
+      IncrementProgress();
+    }
     ResetProgress();
   }
 
-  void SaveItemImage(FileItem item, Image image)
+  void SaveItem(FileItem item)
   {
-    ImageFormat format = item.ImageFormat == null ? image.RawFormat : item.ImageFormat;
+    SaveItem(item, null);
+  }
+
+  void SaveItem(FileItem item, Image image)
+  {
+    if(!item.Changed) return;
+
+    if(image == null) image = GetCachedImage(item);
+    ImageFormat format = item.ImageFormat != null ? item.ImageFormat : image.RawFormat;
+
     if(item.ImageChanged)
     {
-      image.Save(item.Path, format);
+      SaveImage(image, item.Path, format);
       item.ImageChanged = false;
     }
 
     if(item.HasThumbnail && item.ThumbnailChanged)
     {
-      Image baseImage = image != null ? image : GetCachedImage(item);
-      Image thumbnail = CreateThumbnail(baseImage, item.ThumbnailSize.Width, item.ThumbnailSize.Height,
-                                        Color.Transparent, true);
-      thumbnail.Save(item.ThumbnailPath, format);
+      Image thumbnail = ResizeImage(image, item.ThumbnailSize.Width, item.ThumbnailSize.Height, false);
+      SaveImage(thumbnail, item.ThumbnailPath, format); 
       item.ThumbnailChanged = false;
     }
+  }
+
+  void SaveImage(Image image, string path, ImageFormat format)
+  {
+    if(!format.Equals(image.RawFormat)) SaveImageWithInMemoryBuffer(image, path, format);
+    else image.Save(path, format);
+  }
+
+  void SaveImageWithInMemoryBuffer(Image image, string path, ImageFormat format)
+  {
+    PixelFormat pixelFormat;
+    switch(image.PixelFormat)
+    {
+      case PixelFormat.Format1bppIndexed:
+      case PixelFormat.Format4bppIndexed:
+      case PixelFormat.Format8bppIndexed:
+        pixelFormat = image.PixelFormat;
+        break;
+      default:
+        pixelFormat = PixelFormat.Format24bppRgb;
+        break;
+    }
+
+    Bitmap tempImage = new Bitmap(image.Width, image.Height, pixelFormat);
+    if(pixelFormat != PixelFormat.Format24bppRgb) tempImage.Palette = image.Palette;
+
+    using(Graphics g = Graphics.FromImage(tempImage))
+    {
+      g.CompositingMode    = CompositingMode.SourceCopy;
+      g.CompositingQuality = CompositingQuality.HighQuality;
+      g.DrawImageUnscaled(image, 0, 0);
+    }
+
+    tempImage.Save(path, format);
   }
 
   void SaveImagesInBackground()
@@ -681,49 +932,75 @@ partial class MainForm : Form
     {
       bool savedImages = false;
 
-      for(LinkedListNode<KeyValuePair<FileItem, Image>> node = imageCache.First;
-          node != null && !quitting; node = node.Next)
+      if(chkSaveInBackground.Checked)
       {
-        if(node.Value.Key.Changed)
+        lstFiles.Invoke((ThreadStart)delegate
         {
-          try
+          for(LinkedListNode<KeyValuePair<FileItem, Image>> node = imageCache.First;
+              node != null && !quitting; node = node.Next)
           {
-            lstFiles.Invoke((ThreadStart)delegate { SaveItemImage(node.Value.Key, node.Value.Value); });
-            break;
+            if(node.Value.Key.Changed)
+            {
+              try
+              {
+                SaveItem(node.Value.Key, node.Value.Value);
+                savedImages = true;
+                break;
+              }
+              catch { }
+            }
           }
-          catch { }
-        }
+        });
+
+        lstFiles.Invoke((ThreadStart)delegate
+        {
+          foreach(FileItem item in lstFiles.Items)
+          {
+            if(quitting) break;
+
+            if(!item.ImageChanged && item.ThumbnailChanged)
+            {
+              try 
+              {
+                SaveItem(item);
+                savedImages = true;
+                break;
+              }
+              catch { }
+            }
+          }
+        });
       }
 
-      lstFiles.Invoke((ThreadStart)delegate {
-        foreach(FileItem item in lstFiles.Items)
-        {
-          if(quitting) break;
-
-          if(!item.ImageChanged && item.ThumbnailChanged)
-          {
-            try 
-            {
-              SaveItemImage(item, null);
-              break;
-            }
-            catch { }
-          }
-        }
-      });
-
-      if(!savedImages) quitEvent.WaitOne(15000, false);
+      quitEvent.WaitOne(savedImages ? 50 : 15000, false);
     }
   }
 
-  void SetCachedImage(FileItem item, Image image, bool recreateIcon)
+  void SelectGroup(int index, bool addToSelection)
+  {
+    if(!addToSelection) lstFiles.SelectedIndices.Clear();
+
+    if(index != DefaultGroup)
+    {
+      foreach(ListViewItem item in lstFiles.Groups[index+1].Items) item.Selected = true;
+    }
+    else
+    {
+      foreach(ListViewItem item in lstFiles.Items)
+      {
+        if(!item.Selected && item.Group == null) item.Selected = true;
+      }
+    }
+  }
+
+  void SetCachedImage(FileItem item, Image image, bool imageContentsChanged)
   {
     if(image != GetCachedImage(item)) // this moves the image to the front of the linked list
     {
       cacheSize = cacheSize - GetImageSize(imageCache.First.Value.Value) + GetImageSize(image);
       imageCache.First.Value.Value.Dispose();
       imageCache.First.Value = new KeyValuePair<FileItem, Image>(imageCache.First.Value.Key, image);
-      OnImageChanged(item, recreateIcon);
+      OnImageChanged(item, imageContentsChanged);
       CleanupCache();
     }
   }
@@ -744,6 +1021,23 @@ partial class MainForm : Form
     System.Diagnostics.Process.Start(psi);
   }
 
+  void StopLoadingIcons()
+  {
+    StopThread(iconThread);
+  }
+
+  void StopSavingImagesInBackground()
+  {
+    StopThread(saveThread);
+  }
+
+  void StopThread(Thread thread)
+  {
+    quitting = true;
+    quitEvent.Set();
+    if(thread != null && !thread.Join(1000)) thread.Abort();
+  }
+
   void UpdatePictureBox()
   {
     if(picture.Image != null) lblStatus.Text = "";
@@ -752,6 +1046,8 @@ partial class MainForm : Form
     if(lstFiles.SelectedItems.Count == 1)
     {
       Image image = GetCachedImage((FileItem)lstFiles.SelectedItems[0]);
+      if(image == null) return;
+
       lblStatus.Text = image.Width.ToString(CultureInfo.InvariantCulture) + "x" +
                        image.Height.ToString(CultureInfo.InvariantCulture);
       picture.SizeMode = image.Width <= picture.Width && image.Height <= picture.Height ?
@@ -812,33 +1108,57 @@ partial class MainForm : Form
     CreateGroup();
   }
 
+  void renameGroupMenuItem_Click(object sender, EventArgs e)
+  {
+    if(lstGroups.SelectedItems.Count != 0) lstGroups.SelectedItems[0].BeginEdit();
+  }
+
+  void deleteGroupMenuItem_Click(object sender, EventArgs e)
+  {
+    if(lstGroups.SelectedIndices.Count != 0) DeleteGroup(lstGroups.SelectedIndices[0]);
+  }
+
+  void selectGroupMenuItem_Click(object sender, EventArgs e)
+  {
+    if(lstGroups.SelectedIndices.Count != 0)
+    {
+      SelectGroup(lstGroups.SelectedIndices[0], (Control.ModifierKeys & Keys.Shift) != 0);
+    }
+  }
+
   void lstGroups_MouseDoubleClick(object sender, MouseEventArgs e)
   {
     if(lstGroups.GetItemAt(e.X, e.Y) == null) CreateGroup();
   }
 
-  void lstGroups_SizeChanged(object sender, EventArgs e)
+  void vsplit_Panel2_Layout(object sender, LayoutEventArgs e)
   {
-    lstGroups.Columns[0].Width = lstGroups.Width - 4;
+    lstGroups.Columns[0].Width = vsplit.Panel2.Width - lstGroups.Left*2 - 6;
   }
 
   void lstGroups_KeyDown(object sender, KeyEventArgs e)
   {
-    if(e.KeyCode == Keys.F2 && e.Modifiers == Keys.None && lstGroups.SelectedIndices.Count != 0)
+    if(e.KeyCode == Keys.F2 && e.Modifiers == Keys.None)
     {
-      lstGroups.SelectedItems[0].BeginEdit();
+      if(lstGroups.SelectedItems.Count != 0) lstGroups.SelectedItems[0].BeginEdit();
+    }
+    else if(e.KeyCode == Keys.Delete && e.Modifiers == Keys.None)
+    {
+      if(lstGroups.SelectedIndices.Count != 0) DeleteGroup(lstGroups.SelectedIndices[0]);
     }
   }
 
   void MainForm_KeyDown(object sender, KeyEventArgs e)
   {
-    if(e.KeyCode == Keys.F1 && e.Modifiers == Keys.None)
+    if(e.Modifiers == Keys.None)
     {
-      ShowHelp();
+      if(e.KeyCode == Keys.F1) ShowHelp();
+      else if(e.KeyCode == Keys.F3) CreateGroup();
+      else if(e.KeyCode == Keys.Escape) lstFiles.Focus();
     }
-    else if(e.KeyCode == Keys.F3 && e.Modifiers == Keys.None)
+    else if(e.KeyCode == Keys.O && e.Modifiers == Keys.Control)
     {
-      CreateGroup();
+      OpenImages();
     }
   }
 
@@ -856,18 +1176,41 @@ partial class MainForm : Form
     listView.Checked = true;
   }
 
+  void openImagesTool_Click(object sender, EventArgs e)
+  {
+    OpenImages();
+  }
+
   void lstFiles_KeyDown(object sender, KeyEventArgs e)
   {
     if(e.KeyCode >= Keys.D0 && e.KeyCode <= Keys.D9)
     {
-      int groupNum = -1;
-      if(e.Modifiers == Keys.None) groupNum = e.KeyCode == Keys.D0 ? 9 : e.KeyCode - Keys.D1;
-      else if(e.Modifiers == Keys.Control) groupNum = (e.KeyCode == Keys.D0 ? 9 : e.KeyCode - Keys.D1) + 10;
-      if(groupNum != -1) AssignImagesToGroup(groupNum);
+      int groupNum = e.KeyCode == Keys.D0 ? 9 : e.KeyCode - Keys.D1;
+      if(e.Modifiers == Keys.Control)
+      {
+        groupNum += 10;
+      }
+      else if(e.Modifiers == Keys.Alt || e.Modifiers == (Keys.Alt|Keys.Shift))
+      {
+        SelectGroup(groupNum, e.Modifiers == (Keys.Alt|Keys.Shift));
+      }
+      
+      if(e.Modifiers == Keys.None || e.Modifiers == Keys.Control) AssignImagesToGroup(groupNum);
+    }
+    else if(e.KeyCode == Keys.OemMinus)
+    {
+      if(e.Modifiers == Keys.None)
+      {
+        AssignImagesToGroup(DefaultGroup);
+      }
+      else if(e.Modifiers == Keys.Alt || e.Modifiers == (Keys.Alt|Keys.Shift))
+      {
+        SelectGroup(DefaultGroup, e.Modifiers == (Keys.Alt|Keys.Shift));
+      }
     }
     else if(e.KeyCode == Keys.F2 && e.Modifiers == Keys.None)
     {
-      if(lstFiles.SelectedItems.Count == 1) lstFiles.SelectedItems[0].BeginEdit();
+      RenameImages();
     }
     else if(e.KeyCode == Keys.Delete && (e.Modifiers == Keys.None || e.Modifiers == Keys.Shift))
     {
@@ -900,20 +1243,21 @@ partial class MainForm : Form
   void lstFiles_AfterLabelEdit(object sender, LabelEditEventArgs e)
   {
     FileItem item = (FileItem)lstFiles.Items[e.Item];
-    if(e.CancelEdit || e.Label == null || string.Equals(item.Text, e.Label, StringComparison.OrdinalIgnoreCase))
+    if(e.CancelEdit || e.Label == null || string.Equals(item.Text, e.Label, StringComparison.Ordinal))
     {
       item.Text = item.FileName;
     }
     else
     {
-      string itemExtension = Path.GetExtension(item.Path).ToLower(), label = e.Label;
+      string itemExtension = Path.GetExtension(item.Path).ToLower(), label = GetSafeFilename(e.Label);
       
       if(string.Equals(Path.GetExtension(e.Label), itemExtension, StringComparison.OrdinalIgnoreCase))
       {
         label = Path.GetFileNameWithoutExtension(label);
       }
 
-      MoveItem(item, GetUniqueFilename(Path.Combine(Path.GetDirectoryName(item.Path), label + itemExtension)));
+      if(label.Length == 0) label = "Image";
+      MoveItem(item, Path.Combine(Path.GetDirectoryName(item.Path), label + itemExtension), true, true);
     }
 
     e.CancelEdit = true;
@@ -949,8 +1293,7 @@ partial class MainForm : Form
       return;
     }
 
-    ResizeAndRenameFiles(width, height, txtNamingScheme.Text.Trim(),
-                         chkCreateThumbnails.Enabled && chkCreateThumbnails.Checked);
+    ResizeAndRenameFiles(width, height, txtNamingScheme.Text.Trim(), chkCreateThumbnails.Checked);
   }
 
   void txtDimensions_TextChanged(object sender, EventArgs e)
@@ -964,6 +1307,10 @@ partial class MainForm : Form
     else if(!int.TryParse(txtHeight.Text, out height)) height = -1;
 
     chkCreateThumbnails.Enabled = width >= 0 || height >= 0;
+    chkDetectRotated.Enabled = width > 0 && height > 0;
+
+    if(!chkCreateThumbnails.Enabled) chkCreateThumbnails.Checked = false;
+    if(!chkDetectRotated.Enabled) chkDetectRotated.Checked = false;
   }
 
   void picture_SizeChanged(object sender, EventArgs e)
@@ -971,8 +1318,52 @@ partial class MainForm : Form
     UpdatePictureBox();
   }
 
+  void btnJPEG_Click(object sender, EventArgs e)
+  {
+    ConvertImages(ImageFormat.Jpeg, "jpg");
+  }
+
+  void btnPNG_Click(object sender, EventArgs e)
+  {
+    ConvertImages(ImageFormat.Png, "png");
+  }
+
+  void chkCreateThumbnails_CheckedChanged(object sender, EventArgs e)
+  {
+    if(!chkCreateThumbnails.Enabled) return; // ignore changes that occur while the checkbox is disabled
+
+    if(chkCreateThumbnails.Checked)
+    {
+      if(string.Equals(txtNamingScheme.Text, @"%d\%f%e", StringComparison.Ordinal))
+      {
+        if(string.Equals(txtWidth.Text, "1024", StringComparison.Ordinal) &&
+           string.Equals(txtHeight.Text, "768", StringComparison.Ordinal))
+        {
+          txtWidth.Text  = "";
+          txtHeight.Text = "160";
+        }
+
+        txtNamingScheme.Text = @"%d\%f_t%e";
+      }
+    }
+    else if(string.Equals(txtNamingScheme.Text, @"%d\%f_t%e", StringComparison.Ordinal))
+    {
+      if(string.Equals(txtWidth.Text, "", StringComparison.Ordinal) &&
+         string.Equals(txtHeight.Text, "160", StringComparison.Ordinal))
+      {
+        txtWidth.Text  = "1024";
+        txtHeight.Text = "768";
+        chkDetectRotated.Checked = chkDetectRotated.Enabled;
+      }
+
+      txtNamingScheme.Text = @"%d\%f%e";
+    }
+
+    chkOverwriteThumbnails.Enabled = chkCreateThumbnails.Checked;
+  }
+
   readonly LinkedList<KeyValuePair<FileItem, Image>> imageCache = new LinkedList<KeyValuePair<FileItem,Image>>();
-  Thread loadThread, saveThread;
+  Thread iconThread, saveThread;
   string outputDir;
   ManualResetEvent quitEvent = new ManualResetEvent(false);
   int cacheSize, indexNumber;
