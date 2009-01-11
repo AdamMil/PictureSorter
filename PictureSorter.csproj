@@ -78,10 +78,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="help.html" />
+    <Content Include="img\main.png" />
+    <Content Include="img\open.png" />
     <None Include="Resources\error.PNG" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="img\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
