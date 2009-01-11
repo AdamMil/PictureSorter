@@ -60,6 +60,13 @@ namespace PictureSorter.Properties {
             }
         }
         
+        internal static System.Drawing.Icon CameraIcon {
+            get {
+                object obj = ResourceManager.GetObject("CameraIcon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap ErrorImage {
             get {
                 object obj = ResourceManager.GetObject("ErrorImage", resourceCulture);

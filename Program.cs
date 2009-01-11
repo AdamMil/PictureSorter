@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Windows.Forms;
 
 namespace PictureSorter
@@ -15,9 +15,14 @@ static class Program
     #endif
   }
 
-  public static string DataPath
+  public static void ShowHelp()
   {
-    get { return dataPath; }
+    // we need to replace / with \, otherwise firefox chokes on it
+    string htmlFile = Path.Combine(dataPath, "help.html")
+                        .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+    System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo(htmlFile);
+    psi.UseShellExecute = true;
+    System.Diagnostics.Process.Start(psi);
   }
 
   [STAThread]
