@@ -210,10 +210,9 @@
   </metadata>
   <data name="sizeDropPic.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
-        iVBORw0KGgoAAAANSUhEUgAAABEAAAAKCAYAAABSfLWiAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAADpJREFUKFNjYKAi
-        +A80i1yM4gxyDMHqD1IMwhsQxBhEVEjiM4goA2CKsBlEkgHYDCLLAGSDKDKAKM0AIII/wdGLx7IAAAAA
-        SUVORK5CYII=
+        iVBORw0KGgoAAAANSUhEUgAAAAsAAAAGCAYAAAAVMmT4AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAACdJREFUKFNjZGBg
+        +A/EJAGQBkIYxUB8irHajE0DXiciayDKL1g9DQBYmBnoVddQ/wAAAABJRU5ErkJggg==
 </value>
   </data>
   <metadata name="size1MenuItem.GenerateMember" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
