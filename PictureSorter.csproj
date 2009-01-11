@@ -9,6 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>PictureSorter</RootNamespace>
     <AssemblyName>PictureSorter</AssemblyName>
+    <ApplicationIcon>Resources\camera.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -80,6 +81,7 @@
     <Content Include="help.html" />
     <Content Include="img\main.png" />
     <Content Include="img\open.png" />
+    <None Include="Resources\camera.ico" />
     <None Include="Resources\error.PNG" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

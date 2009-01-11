@@ -18,6 +18,8 @@ partial class MainForm : Form
   public MainForm()
   {
     InitializeComponent();
+    Icon = Properties.Resources.CameraIcon;
+    iconTool.Image = Icon.ToBitmap();
 
     vsplit.Panel1MinSize = 380;
     vsplit.Panel2MinSize = 200;
