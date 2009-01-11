@@ -89,7 +89,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="help.html" />
-    <Content Include="img\main.png" />
+    <Content Include="img\crop.jpg" />
+    <Content Include="img\main.jpg" />
     <Content Include="img\open.png" />
     <None Include="Resources\folderopen.ico" />
     <None Include="Resources\camera.ico" />
