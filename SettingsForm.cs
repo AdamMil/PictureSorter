@@ -25,7 +25,7 @@ using System.Windows.Forms;
 namespace PictureSorter
 {
 
-public partial class SettingsForm : Form
+partial class SettingsForm : Form
 {
   public SettingsForm()
   {
@@ -45,6 +45,12 @@ public partial class SettingsForm : Form
   public string OutputDirectory
   {
     get { return txtOutputDir.Text; }
+  }
+
+  protected override void OnLoad(EventArgs e)
+  {
+    base.OnLoad(e);
+    Icon = Properties.Resources.OpenIcon;
   }
 
   void btnBrowsePics_Click(object sender, EventArgs e)

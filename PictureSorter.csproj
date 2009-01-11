@@ -34,6 +34,12 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CropImageForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CropImageForm.Designer.cs">
+      <DependentUpon>CropImageForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -48,6 +54,10 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="CropImageForm.resx">
+      <DependentUpon>CropImageForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <SubType>Designer</SubType>
       <DependentUpon>MainForm.cs</DependentUpon>
@@ -81,6 +91,7 @@
     <Content Include="help.html" />
     <Content Include="img\main.png" />
     <Content Include="img\open.png" />
+    <None Include="Resources\folderopen.ico" />
     <None Include="Resources\camera.ico" />
     <None Include="Resources\error.PNG" />
   </ItemGroup>

@@ -5,7 +5,7 @@
 </head>
 <body>
   <h2>Open Images Form</h2>
-  <img src="img/open.png" /><br />
+  <img src="img/open.png" />
   <p>
   The Open Images form will be displayed when the application first opens, and whenever you click the "Open" button.
   On this form, you select the images to edit and the output directory where the images should be saved.
@@ -19,7 +19,7 @@
   </p>
   
   <h2>Main Form</h2>
-  <img src="img/main.png" /><br />
+  <img src="img/main.jpg" />
 
   <h3>Toolbar</h3>
   At the top-left, near the word "Pictures", is the toolbar. There are two buttons:
@@ -29,6 +29,7 @@
     <li><b>Show/Hide Icons</b> &ndash; This button shows or hides the icons in the image list. Hiding the icons allows you to see
       more items at once.
     </li>
+    <li><b>Crop</b> &ndash; This button allows you to crop the currently selected image.</li>
   </ul>
   To the right of the toolbar is a status area and progress bar.
   
@@ -58,6 +59,7 @@
     <li>Alt-Right &ndash; Rotates the selected images 90 degrees clockwise.</li>
     <li>Alt-Down &ndash; Rotates the selected images 180 degrees.</li>
     <li>Ctrl-A &ndash; Selects all images in the list.</li>
+    <li>Ctrl-C &ndash; Crops the currently selected image.</li>
   </ul>
   These commands are also available from the menu that appears when you right-click within the image list.
   
@@ -180,5 +182,15 @@
     <li>F3 &ndash; Creates a new image group.</li>
     <li>Escape &ndash; Returns the keyboard focus to the image list.</li>
   </ul>
+  
+  <h2>Crop Image Form</h2>
+  <img src="img/crop.jpg" />
+  
+  <p>The Crop Image form allows you to keep only a portion of an image. You can access this form by selecting an image
+    and choosing the Crop command in the main window. To crop an image, first select the region of the image that you
+    want to keep by clicking and dragging the mouse. Then click "Crop". If it looks good, click "Done". Otherwise,
+    drag another rectangle to crop further, or click "Undo" to go back. If you decide you don't want to crop the image
+    after all, click "Cancel".
+  </p>
 </body>
 </html>

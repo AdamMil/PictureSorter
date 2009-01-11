@@ -24,7 +24,7 @@ using System.Windows.Forms;
 namespace PictureSorter
 {
 
-public partial class NameDialog : Form
+partial class NameDialog : Form
 {
   public NameDialog()
   {

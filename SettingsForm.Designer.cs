@@ -33,7 +33,6 @@ namespace PictureSorter
       System.Windows.Forms.Button btnBrowseOutput;
       System.Windows.Forms.Label label1;
       System.Windows.Forms.Button btnCancel;
-      System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
       this.btnOK = new System.Windows.Forms.Button();
       this.txtPics = new System.Windows.Forms.TextBox();
       this.txtOutputDir = new System.Windows.Forms.TextBox();
@@ -146,7 +145,6 @@ namespace PictureSorter
       this.Controls.Add(this.txtPics);
       this.Controls.Add(lblPics);
       this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-      this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
       this.KeyPreview = true;
       this.MaximizeBox = false;
       this.MinimizeBox = false;

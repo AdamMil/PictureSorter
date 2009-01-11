@@ -123,19 +123,16 @@
   <metadata name="tools.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>125, 17</value>
   </metadata>
-  <metadata name="openImagesTool.GenerateMember" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>False</value>
-  </metadata>
   <assembly alias="System.Drawing" name="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="openImagesTool.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+  <data name="cropTool.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAO9JREFUOE9jYKAW
-        OLdI8T8yJslckEZ0cGyWxH+iDAEphIA5aPj/f5AcNoxiMNiAz0DNn3swMYa7IIbOrZJEuA5swOuW/48O
-        +uO0EZsrlhbxQAwBG3C9Baz51v5shJ2/v2OxHyj0vAUsjmLA36v5YAO+f+jEEhZoYXM86v/vn9NQDXi0
-        2en/yQUKIHP///8+BS9+vi/o/7k90agGnF+k+v/6DnuI7cDwwImBzn+/ywmhGRYGx2ZJ/v/wpBJiwONq
-        3Ph+9f97m7AYcHyONETzdWAgEsD7Z2qgugDkigPTJP4Ti+dU4kihIAliMFHJm66KAORP5xRdT7ByAAAA
-        AElFTkSuQmCC
+        YQUAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAARFJREFUOE9jZACC
+        1atX/1+3bh2ICQYODg4M6enpjHABYhiRkZH/T58+Dcbh4eH/QXxi9DHAFM6cOROs6cqVK/8fPHgAZoPE
+        CBoCUohuyL179/6fOHGCOFeANIM0wAzavn37/2vXrv3fs2cP8QaAAvHs2bP/jx8//v/w4cP/z58//3/5
+        8uXEGwCyfc6cOf937tz5/8iRI/9XrFjxf11q2P93k4v/33SXIj4cQC4BBdze5qr/fwwZ/p+TYvj/bvFk
+        0gwBueaSMvP//ysn//9vTKIhsChz09QcxIa8Wj6buDDB6h0zFnDAPtmynTxDnnX2gA043dBMmgEg14AC
+        ti20/v+hOfvBmKj0gZ6RYIaADILJAQAszwmfRpaPmAAAAABJRU5ErkJggg==
 </value>
   </data>
   <metadata name="lblPics.GenerateMember" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">

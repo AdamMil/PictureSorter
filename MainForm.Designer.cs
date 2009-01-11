@@ -30,7 +30,6 @@ namespace PictureSorter
     {
       this.components = new System.ComponentModel.Container();
       System.Windows.Forms.ToolStrip tools;
-      System.Windows.Forms.ToolStripButton openImagesTool;
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
       System.Windows.Forms.Label lblPics;
       System.Windows.Forms.Label lblScheme;
@@ -68,11 +67,14 @@ namespace PictureSorter
       System.Windows.Forms.ToolStripMenuItem selectImagesInGroupMenuItem;
       System.Windows.Forms.ToolStripMenuItem selectNoGroupMenuItem;
       System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Uncategorized", System.Windows.Forms.HorizontalAlignment.Left);
+      this.openImagesTool = new System.Windows.Forms.ToolStripButton();
       this.iconTool = new System.Windows.Forms.ToolStripButton();
+      this.cropTool = new System.Windows.Forms.ToolStripButton();
       this.deleteGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.renameGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.selectGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.assignSelectedImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      this.cropImageMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       this.hsplit = new System.Windows.Forms.SplitContainer();
       this.progress = new System.Windows.Forms.ProgressBar();
       this.lstFiles = new System.Windows.Forms.ListView();
@@ -101,7 +103,6 @@ namespace PictureSorter
       this.menuSep2 = new System.Windows.Forms.ToolStripSeparator();
       this.size4MenuItem = new System.Windows.Forms.ToolStripMenuItem();
       tools = new System.Windows.Forms.ToolStrip();
-      openImagesTool = new System.Windows.Forms.ToolStripButton();
       lblPics = new System.Windows.Forms.Label();
       lblScheme = new System.Windows.Forms.Label();
       lblNamingScheme = new System.Windows.Forms.Label();
@@ -156,22 +157,22 @@ namespace PictureSorter
       tools.Dock = System.Windows.Forms.DockStyle.None;
       tools.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
       tools.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            openImagesTool,
-            this.iconTool});
+            this.openImagesTool,
+            this.iconTool,
+            this.cropTool});
       tools.Location = new System.Drawing.Point(55, 0);
       tools.Name = "tools";
       tools.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-      tools.Size = new System.Drawing.Size(117, 25);
+      tools.Size = new System.Drawing.Size(151, 25);
       tools.TabIndex = 1;
       // 
       // openImagesTool
       // 
-      openImagesTool.Image = ((System.Drawing.Image)(resources.GetObject("openImagesTool.Image")));
-      openImagesTool.ImageTransparentColor = System.Drawing.Color.Magenta;
-      openImagesTool.Name = "openImagesTool";
-      openImagesTool.Size = new System.Drawing.Size(53, 22);
-      openImagesTool.Text = "Open";
-      openImagesTool.Click += new System.EventHandler(this.openImagesTool_Click);
+      this.openImagesTool.ImageTransparentColor = System.Drawing.Color.Magenta;
+      this.openImagesTool.Name = "openImagesTool";
+      this.openImagesTool.Size = new System.Drawing.Size(37, 22);
+      this.openImagesTool.Text = "Open";
+      this.openImagesTool.Click += new System.EventHandler(this.openImagesTool_Click);
       // 
       // iconTool
       // 
@@ -180,6 +181,16 @@ namespace PictureSorter
       this.iconTool.Size = new System.Drawing.Size(61, 22);
       this.iconTool.Text = "Hide Icons";
       this.iconTool.Click += new System.EventHandler(this.iconTool_Click);
+      // 
+      // cropTool
+      // 
+      this.cropTool.Enabled = false;
+      this.cropTool.Image = ((System.Drawing.Image)(resources.GetObject("cropTool.Image")));
+      this.cropTool.ImageTransparentColor = System.Drawing.Color.Magenta;
+      this.cropTool.Name = "cropTool";
+      this.cropTool.Size = new System.Drawing.Size(50, 22);
+      this.cropTool.Text = "Crop";
+      this.cropTool.Click += new System.EventHandler(this.cropTool_Click);
       // 
       // lblPics
       // 
@@ -409,6 +420,7 @@ namespace PictureSorter
             assignToMenuItem,
             renameImageMenuItem,
             deleteImageMenuItem,
+            this.cropImageMenuItem,
             menuSep3,
             rotateImageCC90,
             rotateImageC90,
@@ -451,6 +463,13 @@ namespace PictureSorter
       deleteImageMenuItem.Text = "&Delete Images";
       deleteImageMenuItem.Click += new System.EventHandler(this.deleteImageMenuItem_Click);
       // 
+      // cropImageMenuItem
+      // 
+      this.cropImageMenuItem.Name = "cropImageMenuItem";
+      this.cropImageMenuItem.Size = new System.Drawing.Size(188, 22);
+      this.cropImageMenuItem.Text = "&Crop Image...";
+      this.cropImageMenuItem.Click += new System.EventHandler(this.cropImageMenuItem_Click);
+      // 
       // menuSep3
       // 
       menuSep3.Name = "menuSep3";
@@ -461,7 +480,7 @@ namespace PictureSorter
       rotateImageCC90.Name = "rotateImageCC90";
       rotateImageCC90.Size = new System.Drawing.Size(188, 22);
       rotateImageCC90.Tag = 270;
-      rotateImageCC90.Text = "Rotate &Counterclockwise 90°";
+      rotateImageCC90.Text = "&Rotate Counterclockwise 90°";
       rotateImageCC90.Click += new System.EventHandler(this.rotateImageMenuItem_Click);
       // 
       // rotateImageC90
@@ -469,7 +488,7 @@ namespace PictureSorter
       rotateImageC90.Name = "rotateImageC90";
       rotateImageC90.Size = new System.Drawing.Size(188, 22);
       rotateImageC90.Tag = 90;
-      rotateImageC90.Text = "&Rotate Clockwise 90°";
+      rotateImageC90.Text = "R&otate Clockwise 90°";
       rotateImageC90.Click += new System.EventHandler(this.rotateImageMenuItem_Click);
       // 
       // rotateImage180
@@ -477,7 +496,7 @@ namespace PictureSorter
       rotateImage180.Name = "rotateImage180";
       rotateImage180.Size = new System.Drawing.Size(188, 22);
       rotateImage180.Tag = 180;
-      rotateImage180.Text = "R&otate 180°";
+      rotateImage180.Text = "Ro&tate 180°";
       rotateImage180.Click += new System.EventHandler(this.rotateImageMenuItem_Click);
       // 
       // menuSep4
@@ -498,13 +517,13 @@ namespace PictureSorter
             selectNoGroupMenuItem});
       selectImagesInGroupMenuItem.Name = "selectImagesInGroupMenuItem";
       selectImagesInGroupMenuItem.Size = new System.Drawing.Size(188, 22);
-      selectImagesInGroupMenuItem.Text = "Select Images in Group";
+      selectImagesInGroupMenuItem.Text = "Select Images in &Group";
       selectImagesInGroupMenuItem.DropDownOpening += new System.EventHandler(this.selectImagesInGroupMenuItem_DropDownOpening);
       // 
       // selectNoGroupMenuItem
       // 
       selectNoGroupMenuItem.Name = "selectNoGroupMenuItem";
-      selectNoGroupMenuItem.Size = new System.Drawing.Size(152, 22);
+      selectNoGroupMenuItem.Size = new System.Drawing.Size(119, 22);
       selectNoGroupMenuItem.Text = "&No Group";
       selectNoGroupMenuItem.Click += new System.EventHandler(this.selectGroupImagesMenuItem_Click);
       // 
@@ -535,9 +554,9 @@ namespace PictureSorter
       // 
       this.progress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-      this.progress.Location = new System.Drawing.Point(289, 3);
+      this.progress.Location = new System.Drawing.Point(306, 3);
       this.progress.Name = "progress";
-      this.progress.Size = new System.Drawing.Size(303, 20);
+      this.progress.Size = new System.Drawing.Size(286, 20);
       this.progress.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
       this.progress.TabIndex = 2;
       // 
@@ -576,7 +595,7 @@ namespace PictureSorter
       // 
       // lblStatus
       // 
-      this.lblStatus.Location = new System.Drawing.Point(191, 3);
+      this.lblStatus.Location = new System.Drawing.Point(207, 3);
       this.lblStatus.Name = "lblStatus";
       this.lblStatus.Size = new System.Drawing.Size(95, 20);
       this.lblStatus.TabIndex = 11;
@@ -934,6 +953,9 @@ namespace PictureSorter
     private System.Windows.Forms.ToolStripSeparator menuSep2;
     private System.Windows.Forms.ToolStripMenuItem size4MenuItem;
     private System.Windows.Forms.ContextMenuStrip sizeMenu;
+    private System.Windows.Forms.ToolStripMenuItem cropImageMenuItem;
+    private System.Windows.Forms.ToolStripButton openImagesTool;
+    private System.Windows.Forms.ToolStripButton cropTool;
 
 
   }
