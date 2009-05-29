@@ -66,6 +66,7 @@ namespace PictureSorter
       System.Windows.Forms.ToolStripMenuItem selectAllImagesMenuItem;
       System.Windows.Forms.ToolStripMenuItem selectImagesInGroupMenuItem;
       System.Windows.Forms.ToolStripMenuItem selectNoGroupMenuItem;
+      System.Windows.Forms.ToolStripMenuItem size5MenuItem;
       System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Uncategorized", System.Windows.Forms.HorizontalAlignment.Left);
       this.openImagesTool = new System.Windows.Forms.ToolStripButton();
       this.iconTool = new System.Windows.Forms.ToolStripButton();
@@ -138,6 +139,7 @@ namespace PictureSorter
       selectAllImagesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       selectImagesInGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       selectNoGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      size5MenuItem = new System.Windows.Forms.ToolStripMenuItem();
       tools.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(sizeDropPic)).BeginInit();
       groupMenu.SuspendLayout();
@@ -527,6 +529,13 @@ namespace PictureSorter
       selectNoGroupMenuItem.Text = "&No Group";
       selectNoGroupMenuItem.Click += new System.EventHandler(this.selectGroupImagesMenuItem_Click);
       // 
+      // size5MenuItem
+      // 
+      size5MenuItem.Name = "size5MenuItem";
+      size5MenuItem.Size = new System.Drawing.Size(97, 22);
+      size5MenuItem.Text = "160x0";
+      size5MenuItem.Click += new System.EventHandler(this.sizeMenuItem_Click);
+      // 
       // hsplit
       // 
       this.hsplit.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -554,9 +563,9 @@ namespace PictureSorter
       // 
       this.progress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-      this.progress.Location = new System.Drawing.Point(306, 3);
+      this.progress.Location = new System.Drawing.Point(346, 3);
       this.progress.Name = "progress";
-      this.progress.Size = new System.Drawing.Size(286, 20);
+      this.progress.Size = new System.Drawing.Size(246, 20);
       this.progress.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
       this.progress.TabIndex = 2;
       // 
@@ -579,7 +588,6 @@ namespace PictureSorter
       this.lstFiles.Name = "lstFiles";
       this.lstFiles.ShowItemToolTips = true;
       this.lstFiles.Size = new System.Drawing.Size(589, 328);
-      this.lstFiles.Sorting = System.Windows.Forms.SortOrder.Ascending;
       this.lstFiles.TabIndex = 0;
       this.lstFiles.UseCompatibleStateImageBehavior = false;
       this.lstFiles.AfterLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.lstFiles_AfterLabelEdit);
@@ -595,9 +603,9 @@ namespace PictureSorter
       // 
       // lblStatus
       // 
-      this.lblStatus.Location = new System.Drawing.Point(207, 3);
+      this.lblStatus.Location = new System.Drawing.Point(238, 3);
       this.lblStatus.Name = "lblStatus";
-      this.lblStatus.Size = new System.Drawing.Size(95, 20);
+      this.lblStatus.Size = new System.Drawing.Size(102, 20);
       this.lblStatus.TabIndex = 11;
       this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
       // 
@@ -849,7 +857,6 @@ namespace PictureSorter
       this.lstGroups.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
       this.lstGroups.LabelEdit = true;
       this.lstGroups.Location = new System.Drawing.Point(2, 110);
-      this.lstGroups.MultiSelect = false;
       this.lstGroups.Name = "lstGroups";
       this.lstGroups.ShowGroups = false;
       this.lstGroups.ShowItemToolTips = true;
@@ -869,10 +876,11 @@ namespace PictureSorter
             size3MenuItem,
             size2MenuItem,
             this.menuSep2,
+            size5MenuItem,
             this.size4MenuItem});
       this.sizeMenu.Name = "sizeMenu";
       this.sizeMenu.ShowImageMargin = false;
-      this.sizeMenu.Size = new System.Drawing.Size(98, 98);
+      this.sizeMenu.Size = new System.Drawing.Size(98, 120);
       // 
       // menuSep2
       // 
@@ -884,7 +892,7 @@ namespace PictureSorter
       // 
       this.size4MenuItem.Name = "size4MenuItem";
       this.size4MenuItem.Size = new System.Drawing.Size(97, 22);
-      this.size4MenuItem.Text = "0x160";
+      this.size4MenuItem.Text = "0x120";
       this.size4MenuItem.Click += new System.EventHandler(this.sizeMenuItem_Click);
       // 
       // MainForm
@@ -896,7 +904,7 @@ namespace PictureSorter
       this.Enabled = false;
       this.HelpButton = true;
       this.KeyPreview = true;
-      this.MinimumSize = new System.Drawing.Size(600, 610);
+      this.MinimumSize = new System.Drawing.Size(650, 610);
       this.Name = "MainForm";
       this.Text = "Picture Sorter by Adam Milazzo";
       this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);

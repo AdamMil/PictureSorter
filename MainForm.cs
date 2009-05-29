@@ -44,7 +44,7 @@ partial class MainForm : Form
     openImagesTool.Image = Properties.Resources.OpenIcon.ToBitmap();
     iconTool.Image = Icon.ToBitmap();
 
-    vsplit.Panel1MinSize = 380;
+    vsplit.Panel1MinSize = 435;
     vsplit.Panel2MinSize = 200;
     vsplit.SplitterDistance = vsplit.Width - 200;
     hsplit.SplitterDistance = 240;
@@ -211,7 +211,7 @@ partial class MainForm : Form
   #endregion
 
   #region FileItem
-  sealed class FileItem : ListViewItem
+  internal sealed class FileItem : ListViewItem
   {
     public FileItem(string path)
     {
@@ -321,7 +321,9 @@ partial class MainForm : Form
 
   void AssignImagesToGroup(int index)
   {
+    ListViewItem nextItem = FindNextItem();
     AssignImagesToGroup(index, lstFiles.SelectedItems, false);
+    SelectNextItem(nextItem);
   }
 
   void AssignImagesToGroup(int index, IEnumerable items, bool forceReassign)
@@ -429,6 +431,14 @@ partial class MainForm : Form
     item.BeginEdit();
   }
 
+  int CreateGroup(string name)
+  {
+    int index = lstGroups.Items.Count;
+    lstGroups.Items.Add(GetGroupIndexText(index) + name).Tag = name;
+    lstFiles.Groups.Add(name, name);
+    return index;
+  }
+
   Image CreateIcon(Image image)
   {
     return ResizeImage(image, 64, 64, true);
@@ -466,7 +476,12 @@ partial class MainForm : Form
 
   void DeleteGroup(int index)
   {
-    if(lstFiles.Groups.Count > index) lstFiles.Groups.RemoveAt(index+1);
+    if(lstFiles.Groups.Count > index)
+    {
+      // we have to copy the items into a new list because the group items collection will be modified by the method
+      AssignImagesToGroup(DefaultGroup, new ArrayList(lstFiles.Groups[index+1].Items), false);
+      lstFiles.Groups.RemoveAt(index+1);
+    }
     lstGroups.Items.RemoveAt(index);
 
     // now renumber the groups after it
@@ -492,6 +507,7 @@ partial class MainForm : Form
         }
       }
 
+      ListViewItem nextItem = FindNextItem();
       while(lstFiles.SelectedItems.Count != 0)
       {
         FileItem item = (FileItem)lstFiles.SelectedItems[0];
@@ -509,6 +525,7 @@ partial class MainForm : Form
         File.Delete(item.Path);
         if(item.HasThumbnail) File.Delete(item.ThumbnailPath);
       }
+      SelectNextItem(nextItem);
     }
   }
 
@@ -519,6 +536,10 @@ partial class MainForm : Form
     imageCache.Remove(node);
   }
 
+  /// <summary>Ensures that the image has a file allocated in the output directory. This method should be called before
+  /// performing an operation that relies on the item's <see cref="FileItem.Path"/> property pointing to a location
+  /// within the output directory.
+  /// </summary>
   void EnsureOutputFile(FileItem item)
   {
     if(!item.HasOutputFile)
@@ -526,6 +547,17 @@ partial class MainForm : Form
       string newPath = Path.Combine(outputDir, item.FileName);
       MoveItem(item, newPath, true);
     }
+  }
+
+  string ExtractGroupName(string filename)
+  {
+    Match m = groupNameRe.Match(filename);
+    if(m.Success)
+    {
+      string groupName = m.Groups[1].Value.Trim().ToLower();
+      if(Array.IndexOf(cameraPrefixes, groupName) == -1) return groupName; // ignore common camera filename prefixes
+    }
+    return null;
   }
 
   void FillGroupMenu(ToolStripMenuItem menu, EventHandler handler)
@@ -543,7 +575,82 @@ partial class MainForm : Form
     }
   }
 
-  Image GetCachedImage(FileItem item)
+  /// <summary>Returns the item that appears after or before the selected items in the image list (ie, the item that
+  /// should naturally be focused if the selected items were deleted), or null if no such item can be found.
+  /// </summary>
+  ListViewItem FindNextItem()
+  {
+    if(lstFiles.SelectedItems.Count == 0 || lstFiles.FocusedItem == null || !lstFiles.FocusedItem.Selected)
+    {
+      return lstFiles.FocusedItem;
+    }
+
+    // now find the first unselected item that comes visibly after the focused item
+    ListViewGroup group = lstFiles.FocusedItem.Group;
+    int itemIndex = group.Items.IndexOf(lstFiles.FocusedItem);
+
+    // first search forward within the same group
+    while(itemIndex < group.Items.Count-1)
+    {
+      ListViewItem item = group.Items[++itemIndex];
+      if(!item.Selected) return item;
+    }
+
+    // then backwards within the same group
+    itemIndex = group.Items.IndexOf(lstFiles.FocusedItem);
+    while(itemIndex != 0)
+    {
+      ListViewItem item = group.Items[--itemIndex];
+      if(!item.Selected) return item;
+    }
+
+    // then forwards within the whole set of items
+    itemIndex = group.Items.Count-1;
+    while(true)
+    {
+      if(itemIndex == group.Items.Count-1)
+      {
+        do
+        {
+          int nextGroupIndex = lstFiles.Groups.IndexOf(group)+1;
+          if(nextGroupIndex == lstFiles.Groups.Count) goto doneForward;
+          group = lstFiles.Groups[nextGroupIndex];
+        } while(group.Items.Count == 0);
+        if(group.Items.Count == 0) break;
+        itemIndex = -1;
+      }
+
+      ListViewItem item = group.Items[++itemIndex];
+      if(!item.Selected) return item;
+    }
+    doneForward:
+
+    // there backwards though the whole set of items
+    group = lstFiles.FocusedItem.Group;
+    itemIndex = 0;
+    while(true)
+    {
+      if(itemIndex == 0)
+      {
+        do
+        {
+          int prevGroupIndex = lstFiles.Groups.IndexOf(group)-1;
+          if(prevGroupIndex < 0) goto doneBackward; // there are no more groups, so the search failed
+          group = lstFiles.Groups[prevGroupIndex];
+        } while(group.Items.Count == 0);
+        if(group.Items.Count == 0) break;
+        itemIndex = group.Items.Count;
+      }
+
+      ListViewItem item = group.Items[--itemIndex];
+      if(!item.Selected) return item;
+    }
+    doneBackward:
+
+    return lstFiles.FocusedItem; // the search failed
+  }
+
+  internal Image GetCachedImage(FileItem item)
   {
     for(LinkedListNode<KeyValuePair<FileItem, Image>> node = imageCache.First; node != null; node = node.Next)
     {
@@ -764,7 +871,9 @@ partial class MainForm : Form
   {
     System.Diagnostics.Debug.Assert(!item.BadImage);
 
-    if(imageContentsChanged) // if the image contents changed significantly...
+    EnsureOutputFile(item);
+
+    if(imageContentsChanged) // if the image contents changed significantly, such that we need a new icon...
     {
       lstFiles.LargeImageList.Images[item.ImageIndex] = CreateIcon(GetCachedImage(item));
       lstFiles.Invalidate(lstFiles.GetItemRect(item.Index));
@@ -798,7 +907,9 @@ partial class MainForm : Form
     lstFiles.LargeImageList.ImageSize = new Size(64, 64);
     lstFiles.LargeImageList.Images.Add(Properties.Resources.ErrorImage);
 
-    foreach(string path in form.Pictures) lstFiles.Items.Add(new FileItem(path));
+    List<string> sortedPictures = new List<string>(form.Pictures);
+    sortedPictures.Sort(StringComparer.CurrentCultureIgnoreCase);
+    foreach(string path in sortedPictures) lstFiles.Items.Add(new FileItem(path)).Group = lstFiles.Groups[0];
 
     BeginLoadingIcons();
     BeginSavingImages();
@@ -821,6 +932,40 @@ partial class MainForm : Form
       foreach(FileItem item in lstFiles.Items)
       {
         if(AreSameFile(item.OriginalPath, Path.Combine(outputDir, item.FileName))) item.Path = item.OriginalPath;
+      }
+    }
+
+    // now examine the names of the images and attempt to automatically create groups for them. for instance, if we
+    // see ocean1.jpg, ocean2.jpg, etc, we can put them in a group called "ocean"
+    if(!chkCreateGroupDirs.Checked) // but don't do it if groups are directory based.
+    {                               // TODO: scan directories to create groups in that case
+      Dictionary<string, List<ListViewItem>> groups = new Dictionary<string, List<ListViewItem>>();
+      foreach(ListViewItem item in lstFiles.Items)
+      {
+        string groupName = ExtractGroupName(item.Text);
+        if(groupName != null)
+        {
+          List<ListViewItem> groupItems;
+          if(!groups.TryGetValue(groupName, out groupItems)) groups[groupName] = groupItems = new List<ListViewItem>();
+          groupItems.Add(item);
+        }
+      }
+
+      // then sort the groups by size, so the biggest groups come first. this gives the most convenient hotkeys to the
+      // most commonly-used groups
+      string[] sortedGroups = new string[groups.Count];
+      groups.Keys.CopyTo(sortedGroups, 0);
+      Array.Sort(sortedGroups, delegate(string name1, string name2)
+      {
+        int size1 = groups[name1].Count, size2 = groups[name2].Count;
+        return size1 != size2 ? size2 - size1 : string.Compare(name1, name2, StringComparison.Ordinal);
+      });
+
+      // now actually assign the items, but skip "groups" with only a single item. (they're not really groups.)
+      foreach(string groupName in sortedGroups)
+      {
+        List<ListViewItem> groupItems = groups[groupName];
+        if(groupItems.Count > 1) AssignImagesToGroup(CreateGroup(groupName), groupItems, false);
       }
     }
 
@@ -872,7 +1017,7 @@ partial class MainForm : Form
         if(groupIndex != IgnoreGroup)
         {
           item.GroupIndex = groupIndex;
-          item.Group = groupIndex == DefaultGroup ? null : lstFiles.Groups[groupIndex+1];
+          item.Group = groupIndex == DefaultGroup ? lstFiles.Groups[0] : lstFiles.Groups[groupIndex+1];
         }
       }
     }
@@ -1012,7 +1157,6 @@ partial class MainForm : Form
     {
       try
       {
-        EnsureOutputFile(item);
         Image image = GetCachedImage(item);
         if(image != null)
         {
@@ -1173,23 +1317,28 @@ partial class MainForm : Form
   void SelectGroup(int index, bool addToSelection)
   {
     if(!addToSelection) lstFiles.SelectedIndices.Clear();
-
-    if(index != DefaultGroup)
+    ListViewGroup group = lstFiles.Groups[index+1];
+    if(group.Items.Count != 0)
     {
-      foreach(ListViewItem item in lstFiles.Groups[index+1].Items) item.Selected = true;
-    }
-    else
-    {
-      foreach(ListViewItem item in lstFiles.Items)
-      {
-        if(!item.Selected && item.Group == null) item.Selected = true;
-      }
+      foreach(ListViewItem item in group.Items) item.Selected = true;
+      lstFiles.EnsureVisible(group.Items[0].Index);
     }
   }
 
   void SelectAllImages()
   {
     foreach(ListViewItem item in lstFiles.Items) item.Selected = true;
+  }
+
+  void SelectNextItem(ListViewItem item)
+  {
+    if(!item.Selected)
+    {
+      lstFiles.SelectedItems.Clear();
+      item.Selected = true;
+    }
+    item.Focused = true;
+    item.EnsureVisible();
   }
 
   void SetCachedImage(FileItem item, Image image, bool imageContentsChanged)
@@ -1240,9 +1389,20 @@ partial class MainForm : Form
 
       lblStatus.Text = image.Width.ToString(CultureInfo.InvariantCulture) + "x" +
                        image.Height.ToString(CultureInfo.InvariantCulture);
+
       picture.SizeMode = image.Width <= picture.Width && image.Height <= picture.Height ?
         PictureBoxSizeMode.CenterImage : PictureBoxSizeMode.Zoom;
       picture.Image = image;
+    }
+  }
+
+  void ZoomImage()
+  {
+    if(lstFiles.SelectedItems.Count != 0)
+    {
+      List<FileItem> items = new List<FileItem>(lstFiles.SelectedItems.Count);
+      foreach(FileItem item in lstFiles.SelectedItems) items.Add(item);
+      new ZoomImageForm(this, items).ShowDialog();
     }
   }
 
@@ -1302,8 +1462,9 @@ partial class MainForm : Form
 
   void groupMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
   {
-    renameGroupMenuItem.Enabled = deleteGroupMenuItem.Enabled = selectGroupMenuItem.Enabled =
-      assignSelectedImagesMenuItem.Enabled = lstGroups.SelectedIndices.Count != 0;
+    renameGroupMenuItem.Enabled = selectGroupMenuItem.Enabled = assignSelectedImagesMenuItem.Enabled =
+      lstGroups.SelectedIndices.Count == 1;
+    deleteGroupMenuItem.Enabled = lstGroups.SelectedItems.Count != 0;
 
     if(assignSelectedImagesMenuItem.Enabled && lstFiles.SelectedItems.Count == 0)
     {
@@ -1346,33 +1507,45 @@ partial class MainForm : Form
 
   void vsplit_Panel2_Layout(object sender, LayoutEventArgs e)
   {
-    lstGroups.Columns[0].Width = vsplit.Panel2.Width - lstGroups.Left*2 - 6;
+    lstGroups.Columns[0].Width = vsplit.Panel2.Width - lstGroups.Left*2 - 6 - 16;
   }
 
   void lstGroups_KeyDown(object sender, KeyEventArgs e)
   {
     if(e.KeyCode == Keys.F2 && e.Modifiers == Keys.None)
     {
-      if(lstGroups.SelectedItems.Count != 0) lstGroups.SelectedItems[0].BeginEdit();
+      if(lstGroups.SelectedItems.Count == 1) lstGroups.SelectedItems[0].BeginEdit();
+      e.Handled = true;
     }
     else if(e.KeyCode == Keys.Delete && e.Modifiers == Keys.None)
     {
-      if(lstGroups.SelectedIndices.Count != 0) DeleteGroup(lstGroups.SelectedIndices[0]);
+      while(lstGroups.SelectedIndices.Count != 0) DeleteGroup(lstGroups.SelectedIndices[0]);
+      e.Handled = true;
+    }
+    else if(e.KeyCode == Keys.A && e.Modifiers == Keys.Control)
+    {
+      foreach(ListViewItem item in lstGroups.Items) item.Selected = true;
+      e.Handled = true;
     }
   }
 
   void MainForm_KeyDown(object sender, KeyEventArgs e)
   {
+    bool handled = true;
     if(e.Modifiers == Keys.None)
     {
       if(e.KeyCode == Keys.F1) Program.ShowHelp();
       else if(e.KeyCode == Keys.F3) CreateGroup();
       else if(e.KeyCode == Keys.Escape) lstFiles.Focus();
+      else handled = false;
     }
     else if(e.KeyCode == Keys.O && e.Modifiers == Keys.Control)
     {
       OpenImages();
     }
+    else handled = false;
+
+    if(handled) e.Handled = true;
   }
 
   void iconTool_Click(object sender, EventArgs e)
@@ -1404,48 +1577,66 @@ partial class MainForm : Form
       if(e.Modifiers == Keys.Alt || e.Modifiers == (Keys.Alt|Keys.Shift))
       {
         SelectGroup(groupNum, e.Modifiers == (Keys.Alt|Keys.Shift));
+        e.Handled = true;
       }
-      
-      if(e.Modifiers == Keys.None || e.Modifiers == Keys.Control) AssignImagesToGroup(groupNum);
+      else if(e.Modifiers == Keys.None || e.Modifiers == Keys.Control)
+      {
+        AssignImagesToGroup(groupNum);
+        e.Handled = true;
+      }
     }
     else if(e.KeyCode == Keys.OemMinus)
     {
       if(e.Modifiers == Keys.None)
       {
         AssignImagesToGroup(DefaultGroup);
+        e.Handled = true;
       }
       else if(e.Modifiers == Keys.Alt || e.Modifiers == (Keys.Alt|Keys.Shift))
       {
         SelectGroup(DefaultGroup, e.Modifiers == (Keys.Alt|Keys.Shift));
+        e.Handled = true;
       }
     }
     else if(e.KeyCode == Keys.F2 && e.Modifiers == Keys.None)
     {
       RenameImages();
+      e.Handled = true;
     }
     else if(e.KeyCode == Keys.Delete && (e.Modifiers == Keys.None || e.Modifiers == Keys.Shift))
     {
       DeleteImages(e.Modifiers == Keys.None);
+      e.Handled = true;
     }
     else if(e.KeyCode == Keys.Left && e.Modifiers == Keys.Alt)
     {
       RotateImages(270);
+      e.Handled = true;
     }
     else if(e.KeyCode == Keys.Right && e.Modifiers == Keys.Alt)
     {
       RotateImages(90);
+      e.Handled = true;
     }
     else if(e.KeyCode == Keys.Down && e.Modifiers == Keys.Alt)
     {
       RotateImages(180);
+      e.Handled = true;
     }
     else if(e.KeyCode == Keys.A && e.Modifiers == Keys.Control)
     {
       SelectAllImages();
+      e.Handled = true;
     }
     else if(e.KeyCode == Keys.C && e.Modifiers == Keys.Control)
     {
       CropImage();
+      e.Handled = true;
+    }
+    else if(e.KeyCode == Keys.Enter && e.Modifiers == Keys.None)
+    {
+      ZoomImage();
+      e.Handled = true;
     }
   }
 
@@ -1556,7 +1747,7 @@ partial class MainForm : Form
            string.Equals(txtHeight.Text, "768", StringComparison.Ordinal))
         {
           txtWidth.Text  = "";
-          txtHeight.Text = "160";
+          txtHeight.Text = "120";
         }
 
         txtNamingScheme.Text = @"%f_t%e";
@@ -1565,7 +1756,7 @@ partial class MainForm : Form
     else if(string.Equals(txtNamingScheme.Text, @"%f_t%e", StringComparison.Ordinal))
     {
       if(string.Equals(txtWidth.Text, "", StringComparison.Ordinal) &&
-         string.Equals(txtHeight.Text, "160", StringComparison.Ordinal))
+         string.Equals(txtHeight.Text, "120", StringComparison.Ordinal))
       {
         txtWidth.Text  = "1024";
         txtHeight.Text = "768";
@@ -1694,7 +1885,12 @@ partial class MainForm : Form
   int maxCacheSize=100*1024*1024, cacheSize, indexNumber;
   bool quitting;
 
-  static Regex renameRe = new Regex(@"%[defn%]", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+  static readonly Regex renameRe = new Regex(@"%[defn%]", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+  static readonly Regex groupNameRe = new Regex(@"^(.*?)(\s*\d+)\.\w+$", RegexOptions.Singleline);
+  static readonly string[] cameraPrefixes = new string[]
+  {
+    "cimg", "dsc_", "dscf", "dscn", "duw", "img", "jd", "mgp", "pict", "stcn"
+  };
 }
 
 } // namespace PictureSorter

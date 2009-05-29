@@ -402,6 +402,11 @@ partial class CropImageForm : Form
     OnMouseUp(e.Button, PointToClient(((Control)sender).PointToScreen(e.Location)));
   }
 
+  void CropImageForm_KeyDown(object sender, KeyEventArgs e)
+  {
+    if(e.KeyCode == Keys.F1 && e.Modifiers == Keys.None) Program.ShowHelp();
+  }
+
   List<RectangleF> imageRects = new List<RectangleF>();
   Image newImage;
   Rectangle dragRect;
