@@ -131,11 +131,13 @@ namespace PictureSorter
       this.Controls.Add(this.btnUndo);
       this.Controls.Add(this.btnCrop);
       this.Controls.Add(lblHelp);
+      this.KeyPreview = true;
       this.MinimumSize = new System.Drawing.Size(636, 320);
       this.Name = "CropImageForm";
       this.ShowIcon = false;
       this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
       this.Text = "Crop Image";
+      this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.CropImageForm_KeyDown);
       this.ResumeLayout(false);
 
     }
