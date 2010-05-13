@@ -1574,15 +1574,18 @@ partial class MainForm : Form
       int groupNum = e.KeyCode == Keys.D0 ? 9 : e.KeyCode - Keys.D1;
       if((e.Modifiers & Keys.Control) != 0) groupNum += 10;
 
-      if(e.Modifiers == Keys.Alt || e.Modifiers == (Keys.Alt|Keys.Shift))
+      if(groupNum < lstGroups.Items.Count)
       {
-        SelectGroup(groupNum, e.Modifiers == (Keys.Alt|Keys.Shift));
-        e.Handled = true;
-      }
-      else if(e.Modifiers == Keys.None || e.Modifiers == Keys.Control)
-      {
-        AssignImagesToGroup(groupNum);
-        e.Handled = true;
+        if(e.Modifiers == Keys.Alt || e.Modifiers == (Keys.Alt|Keys.Shift))
+        {
+          SelectGroup(groupNum, e.Modifiers == (Keys.Alt|Keys.Shift));
+          e.Handled = true;
+        }
+        else if(e.Modifiers == Keys.None || e.Modifiers == Keys.Control)
+        {
+          AssignImagesToGroup(groupNum);
+          e.Handled = true;
+        }
       }
     }
     else if(e.KeyCode == Keys.OemMinus)
