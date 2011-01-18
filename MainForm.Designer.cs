@@ -67,6 +67,7 @@ namespace PictureSorter
       System.Windows.Forms.ToolStripMenuItem selectImagesInGroupMenuItem;
       System.Windows.Forms.ToolStripMenuItem selectNoGroupMenuItem;
       System.Windows.Forms.ToolStripMenuItem size5MenuItem;
+      System.Windows.Forms.Label lblJpegQuality;
       System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Uncategorized", System.Windows.Forms.HorizontalAlignment.Left);
       this.openImagesTool = new System.Windows.Forms.ToolStripButton();
       this.iconTool = new System.Windows.Forms.ToolStripButton();
@@ -83,6 +84,7 @@ namespace PictureSorter
       this.lblStatus = new System.Windows.Forms.Label();
       this.picture = new System.Windows.Forms.PictureBox();
       this.vsplit = new System.Windows.Forms.SplitContainer();
+      this.txtJpegQuality = new System.Windows.Forms.TextBox();
       this.btnResize = new System.Windows.Forms.Button();
       this.txtCacheSize = new System.Windows.Forms.TextBox();
       this.chkOverwriteThumbnails = new System.Windows.Forms.CheckBox();
@@ -140,6 +142,7 @@ namespace PictureSorter
       selectImagesInGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       selectNoGroupMenuItem = new System.Windows.Forms.ToolStripMenuItem();
       size5MenuItem = new System.Windows.Forms.ToolStripMenuItem();
+      lblJpegQuality = new System.Windows.Forms.Label();
       tools.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)(sizeDropPic)).BeginInit();
       groupMenu.SuspendLayout();
@@ -206,6 +209,7 @@ namespace PictureSorter
       // 
       // lblScheme
       // 
+      lblScheme.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       lblScheme.Location = new System.Drawing.Point(4, 480);
       lblScheme.Name = "lblScheme";
       lblScheme.Size = new System.Drawing.Size(150, 29);
@@ -214,6 +218,7 @@ namespace PictureSorter
       // 
       // lblNamingScheme
       // 
+      lblNamingScheme.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       lblNamingScheme.Location = new System.Drawing.Point(4, 353);
       lblNamingScheme.Name = "lblNamingScheme";
       lblNamingScheme.Size = new System.Drawing.Size(58, 16);
@@ -222,6 +227,7 @@ namespace PictureSorter
       // 
       // lblX
       // 
+      lblX.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       lblX.Location = new System.Drawing.Point(94, 328);
       lblX.Name = "lblX";
       lblX.Size = new System.Drawing.Size(10, 14);
@@ -231,7 +237,7 @@ namespace PictureSorter
       // 
       // lblResizeRename
       // 
-      lblResizeRename.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      lblResizeRename.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       lblResizeRename.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
       lblResizeRename.Location = new System.Drawing.Point(3, 305);
@@ -264,6 +270,7 @@ namespace PictureSorter
       // 
       // lblNewSize
       // 
+      lblNewSize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       lblNewSize.Location = new System.Drawing.Point(4, 329);
       lblNewSize.Name = "lblNewSize";
       lblNewSize.Size = new System.Drawing.Size(58, 16);
@@ -272,7 +279,7 @@ namespace PictureSorter
       // 
       // lblConvert
       // 
-      lblConvert.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      lblConvert.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       lblConvert.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
       lblConvert.Location = new System.Drawing.Point(3, 515);
@@ -284,6 +291,7 @@ namespace PictureSorter
       // 
       // btnJPEG
       // 
+      btnJPEG.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       btnJPEG.Location = new System.Drawing.Point(8, 536);
       btnJPEG.Name = "btnJPEG";
       btnJPEG.Size = new System.Drawing.Size(75, 23);
@@ -294,6 +302,7 @@ namespace PictureSorter
       // 
       // btnPNG
       // 
+      btnPNG.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       btnPNG.Location = new System.Drawing.Point(89, 535);
       btnPNG.Name = "btnPNG";
       btnPNG.Size = new System.Drawing.Size(75, 23);
@@ -307,7 +316,7 @@ namespace PictureSorter
       lblGroups.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       lblGroups.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-      lblGroups.Location = new System.Drawing.Point(4, 91);
+      lblGroups.Location = new System.Drawing.Point(4, 108);
       lblGroups.Name = "lblGroups";
       lblGroups.Size = new System.Drawing.Size(188, 17);
       lblGroups.TabIndex = 10;
@@ -331,6 +340,7 @@ namespace PictureSorter
       // 
       // lblFirstIndex
       // 
+      lblFirstIndex.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       lblFirstIndex.Location = new System.Drawing.Point(4, 379);
       lblFirstIndex.Name = "lblFirstIndex";
       lblFirstIndex.Size = new System.Drawing.Size(58, 16);
@@ -344,6 +354,7 @@ namespace PictureSorter
       // 
       // sizeDropPic
       // 
+      sizeDropPic.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       sizeDropPic.Image = ((System.Drawing.Image)(resources.GetObject("sizeDropPic.Image")));
       sizeDropPic.Location = new System.Drawing.Point(135, 326);
       sizeDropPic.Name = "sizeDropPic";
@@ -536,6 +547,14 @@ namespace PictureSorter
       size5MenuItem.Text = "160x0";
       size5MenuItem.Click += new System.EventHandler(this.sizeMenuItem_Click);
       // 
+      // lblJpegQuality
+      // 
+      lblJpegQuality.Location = new System.Drawing.Point(5, 88);
+      lblJpegQuality.Name = "lblJpegQuality";
+      lblJpegQuality.Size = new System.Drawing.Size(86, 16);
+      lblJpegQuality.TabIndex = 5;
+      lblJpegQuality.Text = "JPEG quality (%)";
+      // 
       // hsplit
       // 
       this.hsplit.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -636,6 +655,8 @@ namespace PictureSorter
       // 
       // vsplit.Panel2
       // 
+      this.vsplit.Panel2.Controls.Add(this.txtJpegQuality);
+      this.vsplit.Panel2.Controls.Add(lblJpegQuality);
       this.vsplit.Panel2.Controls.Add(this.btnResize);
       this.vsplit.Panel2.Controls.Add(this.txtCacheSize);
       this.vsplit.Panel2.Controls.Add(lblCacheSize);
@@ -671,8 +692,17 @@ namespace PictureSorter
       this.vsplit.SplitterDistance = 592;
       this.vsplit.TabIndex = 0;
       // 
+      // txtJpegQuality
+      // 
+      this.txtJpegQuality.Location = new System.Drawing.Point(91, 85);
+      this.txtJpegQuality.MaxLength = 3;
+      this.txtJpegQuality.Name = "txtJpegQuality";
+      this.txtJpegQuality.Size = new System.Drawing.Size(46, 20);
+      this.txtJpegQuality.TabIndex = 6;
+      // 
       // btnResize
       // 
+      this.btnResize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       this.btnResize.Location = new System.Drawing.Point(97, 376);
       this.btnResize.Name = "btnResize";
       this.btnResize.Size = new System.Drawing.Size(45, 23);
@@ -684,6 +714,7 @@ namespace PictureSorter
       // txtCacheSize
       // 
       this.txtCacheSize.Location = new System.Drawing.Point(91, 62);
+      this.txtCacheSize.MaxLength = 4;
       this.txtCacheSize.Name = "txtCacheSize";
       this.txtCacheSize.Size = new System.Drawing.Size(46, 20);
       this.txtCacheSize.TabIndex = 4;
@@ -692,7 +723,7 @@ namespace PictureSorter
       // 
       // chkOverwriteThumbnails
       // 
-      this.chkOverwriteThumbnails.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      this.chkOverwriteThumbnails.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.chkOverwriteThumbnails.Checked = true;
       this.chkOverwriteThumbnails.CheckState = System.Windows.Forms.CheckState.Checked;
@@ -719,7 +750,7 @@ namespace PictureSorter
       // 
       // chkSkipSmaller
       // 
-      this.chkSkipSmaller.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      this.chkSkipSmaller.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.chkSkipSmaller.Checked = true;
       this.chkSkipSmaller.CheckState = System.Windows.Forms.CheckState.Checked;
@@ -732,7 +763,7 @@ namespace PictureSorter
       // 
       // chkDetectRotated
       // 
-      this.chkDetectRotated.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      this.chkDetectRotated.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.chkDetectRotated.Checked = true;
       this.chkDetectRotated.CheckState = System.Windows.Forms.CheckState.Checked;
@@ -745,6 +776,8 @@ namespace PictureSorter
       // 
       // chkConfirmConvert
       // 
+      this.chkConfirmConvert.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
       this.chkConfirmConvert.Checked = true;
       this.chkConfirmConvert.CheckState = System.Windows.Forms.CheckState.Checked;
       this.chkConfirmConvert.Location = new System.Drawing.Point(8, 564);
@@ -756,6 +789,7 @@ namespace PictureSorter
       // 
       // txtIndex
       // 
+      this.txtIndex.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       this.txtIndex.Location = new System.Drawing.Point(59, 377);
       this.txtIndex.Name = "txtIndex";
       this.txtIndex.Size = new System.Drawing.Size(32, 20);
@@ -764,7 +798,7 @@ namespace PictureSorter
       // 
       // chkCreateThumbnails
       // 
-      this.chkCreateThumbnails.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      this.chkCreateThumbnails.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.chkCreateThumbnails.Location = new System.Drawing.Point(7, 439);
       this.chkCreateThumbnails.Name = "chkCreateThumbnails";
@@ -776,6 +810,7 @@ namespace PictureSorter
       // 
       // txtNamingScheme
       // 
+      this.txtNamingScheme.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       this.txtNamingScheme.Location = new System.Drawing.Point(59, 351);
       this.txtNamingScheme.Name = "txtNamingScheme";
       this.txtNamingScheme.Size = new System.Drawing.Size(129, 20);
@@ -784,6 +819,7 @@ namespace PictureSorter
       // 
       // txtHeight
       // 
+      this.txtHeight.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       this.txtHeight.Location = new System.Drawing.Point(106, 325);
       this.txtHeight.Name = "txtHeight";
       this.txtHeight.Size = new System.Drawing.Size(31, 20);
@@ -793,6 +829,7 @@ namespace PictureSorter
       // 
       // txtWidth
       // 
+      this.txtWidth.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
       this.txtWidth.Location = new System.Drawing.Point(59, 325);
       this.txtWidth.Name = "txtWidth";
       this.txtWidth.Size = new System.Drawing.Size(31, 20);
@@ -813,7 +850,7 @@ namespace PictureSorter
       // 
       // chkLowerCase
       // 
-      this.chkLowerCase.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      this.chkLowerCase.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.chkLowerCase.Checked = true;
       this.chkLowerCase.CheckState = System.Windows.Forms.CheckState.Checked;
@@ -826,7 +863,7 @@ namespace PictureSorter
       // 
       // chkCreateGroupDirs
       // 
-      this.chkCreateGroupDirs.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      this.chkCreateGroupDirs.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.chkCreateGroupDirs.Location = new System.Drawing.Point(7, 259);
       this.chkCreateGroupDirs.Name = "chkCreateGroupDirs";
@@ -837,7 +874,7 @@ namespace PictureSorter
       // 
       // chkAutoRename
       // 
-      this.chkAutoRename.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      this.chkAutoRename.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.chkAutoRename.Location = new System.Drawing.Point(7, 239);
       this.chkAutoRename.Name = "chkAutoRename";
@@ -848,7 +885,8 @@ namespace PictureSorter
       // 
       // lstGroups
       // 
-      this.lstGroups.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+      this.lstGroups.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
       this.lstGroups.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             colGroupName});
@@ -856,11 +894,11 @@ namespace PictureSorter
       this.lstGroups.FullRowSelect = true;
       this.lstGroups.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
       this.lstGroups.LabelEdit = true;
-      this.lstGroups.Location = new System.Drawing.Point(2, 110);
+      this.lstGroups.Location = new System.Drawing.Point(2, 128);
       this.lstGroups.Name = "lstGroups";
       this.lstGroups.ShowGroups = false;
       this.lstGroups.ShowItemToolTips = true;
-      this.lstGroups.Size = new System.Drawing.Size(190, 126);
+      this.lstGroups.Size = new System.Drawing.Size(190, 108);
       this.lstGroups.TabIndex = 11;
       this.lstGroups.UseCompatibleStateImageBehavior = false;
       this.lstGroups.View = System.Windows.Forms.View.Details;
@@ -964,6 +1002,7 @@ namespace PictureSorter
     private System.Windows.Forms.ToolStripMenuItem cropImageMenuItem;
     private System.Windows.Forms.ToolStripButton openImagesTool;
     private System.Windows.Forms.ToolStripButton cropTool;
+    private System.Windows.Forms.TextBox txtJpegQuality;
 
 
   }

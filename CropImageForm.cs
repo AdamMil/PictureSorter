@@ -367,6 +367,8 @@ partial class CropImageForm : Form
       image.Palette = overlay.Image.Palette; // copy the palette, if there is one
     }
 
+    image.SetResolution(overlay.Image.HorizontalResolution, overlay.Image.VerticalResolution);
+
     using(Graphics g = Graphics.FromImage(image)) // and blit the original image into the final bitmap
     {
       g.CompositingMode    = CompositingMode.SourceCopy;

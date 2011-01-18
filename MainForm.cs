@@ -215,16 +215,12 @@ partial class MainForm : Form
   {
     public FileItem(string path)
     {
-      originalPath = path;
-      Text = FileName;
-      group = DefaultGroup;
+      OriginalPath = path;
+      Text         = FileName;
+      GroupIndex   = DefaultGroup;
     }
 
-    public bool BadImage
-    {
-      get { return badImage; }
-      set { badImage = value; }
-    }
+    public bool BadImage { get; set; }
 
     public bool Changed
     {
@@ -236,44 +232,23 @@ partial class MainForm : Form
       get { return System.IO.Path.GetFileName(Path); }
     }
 
-    public int GroupIndex
-    {
-      get { return group; }
-      set { group = value; }
-    }
+    public int GroupIndex { get; set; }
 
     public bool HasOutputFile
     {
       get { return path != null; }
     }
 
-    public bool HasIcon
-    {
-      get { return hasIcon; }
-      set { hasIcon = value; }
-    }
+    public bool HasIcon { get; set; }
 
     public bool HasThumbnail
     {
       get { return !string.IsNullOrEmpty(ThumbnailPath); }
     }
 
-    public bool ImageChanged
-    {
-      get { return imageChanged; }
-      set { imageChanged = value; }
-    }
-
-    public ImageFormat ImageFormat
-    {
-      get { return format; }
-      set { format = value; }
-    }
-
-    public string OriginalPath
-    {
-      get { return originalPath; }
-    }
+    public bool ImageChanged { get; set; }
+    public ImageFormat ImageFormat { get; set; }
+    public string OriginalPath { get; private set; }
 
     public string Path
     {
@@ -281,36 +256,12 @@ partial class MainForm : Form
       set { path = value; }
     }
 
-    public bool ThumbnailChanged
-    {
-      get { return thumbnailChanged; }
-      set { thumbnailChanged = value; }
-    }
+    public bool ThumbnailChanged { get; set; }
+    public string ThumbnailPath { get; set; }
+    public string ThumbnailScheme { get; set; }
+    public Size ThumbnailSize { get; set; }
 
-    public string ThumbnailPath
-    {
-      get { return thumbnailPath; }
-      set { thumbnailPath = value; }
-    }
-
-    public string ThumbnailScheme
-    {
-      get { return thumbnailScheme; }
-      set { thumbnailScheme = value; }
-    }
-
-    public Size ThumbnailSize
-    {
-      get { return thumbnailSize; }
-      set { thumbnailSize = value; }
-    }
-
-    readonly string originalPath;
-    string path, thumbnailPath, thumbnailScheme;
-    Size thumbnailSize;
-    int group;
-    ImageFormat format;
-    bool badImage, imageChanged, hasIcon, thumbnailChanged;
+    string path;
   }
   #endregion
 
@@ -1079,6 +1030,8 @@ partial class MainForm : Form
       newImage.Palette = image.Palette; // copy the palette, if there is one
     }
 
+    newImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+
     using(Graphics g = Graphics.FromImage(newImage))
     {
       g.CompositingMode = CompositingMode.SourceCopy;
@@ -1232,8 +1185,41 @@ partial class MainForm : Form
 
   void SaveImage(Image image, string path, ImageFormat format)
   {
-    if(!format.Equals(image.RawFormat)) SaveImageWithInMemoryBuffer(image, path, format);
-    else image.Save(path, format);
+    if(!format.Equals(image.RawFormat))
+    {
+      SaveImageWithInMemoryBuffer(image, path, format);
+    }
+    else
+    {
+      // sometimes Image.Save() throws an exception when dealing with JPEGs, and the solution seems to be to copy it to another
+      // image before saving
+      try { SaveImageDirectly(image, path, format); }
+      catch(System.Runtime.InteropServices.ExternalException) { SaveImageWithInMemoryBuffer(image, path, format); }
+    }
+  }
+
+  void SaveImageDirectly(Image image, string path, ImageFormat format)
+  {
+    if(format.Equals(ImageFormat.Jpeg) && !string.IsNullOrEmpty(txtJpegQuality.Text))
+    {
+      int quality;
+      if(int.TryParse(txtJpegQuality.Text.Trim(), out quality))
+      {
+        quality = Math.Max(0, Math.Min(100, quality));
+        foreach(ImageCodecInfo codec in ImageCodecInfo.GetImageEncoders())
+        {
+          if(codec.MimeType.Equals("image/jpeg", StringComparison.OrdinalIgnoreCase))
+          {
+            EncoderParameters parms = new EncoderParameters(1);
+            parms.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, (long)quality);
+            image.Save(path, codec, parms);
+            return;
+          }
+        }
+      }
+    }
+
+    image.Save(path, format);
   }
 
   void SaveImageWithInMemoryBuffer(Image image, string path, ImageFormat format)
@@ -1253,15 +1239,16 @@ partial class MainForm : Form
 
     Bitmap tempImage = new Bitmap(image.Width, image.Height, pixelFormat);
     if(pixelFormat != PixelFormat.Format24bppRgb) tempImage.Palette = image.Palette;
+    tempImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
 
     using(Graphics g = Graphics.FromImage(tempImage))
     {
       g.CompositingMode    = CompositingMode.SourceCopy;
       g.CompositingQuality = CompositingQuality.HighQuality;
-      g.DrawImageUnscaled(image, 0, 0);
+      g.DrawImage(image, new Rectangle(0, 0, tempImage.Width, tempImage.Height));
     }
 
-    tempImage.Save(path, format);
+    SaveImageDirectly(tempImage, path, format);
   }
 
   void SaveImagesInBackground()
