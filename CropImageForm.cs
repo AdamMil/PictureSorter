@@ -2,7 +2,7 @@
 PictureSorter is a program that assists in the orientation, resizing, and
 renaming of images.
 
-Copyright (C) 2009 Adam Milazzo
+Copyright (C) 2009-2011 Adam Milazzo
 http://www.adammil.net/
 
 This program is free software; you can redistribute it and/or

@@ -2,7 +2,7 @@
 PictureSorter is a program that assists in the orientation, resizing, and
 renaming of images.
 
-Copyright (C) 2009 Adam Milazzo
+Copyright (C) 2009-2011 Adam Milazzo
 http://www.adammil.net/
 
 This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ using System.Runtime.InteropServices;
 #else
 [assembly: AssemblyConfiguration("Release")]
 #endif
-[assembly: AssemblyCopyright("Copyright © Adam Milazzo 2009")]
+[assembly: AssemblyCopyright("Copyright © Adam Milazzo 2009-2011")]
 
 [assembly: ComVisible(false)]
 [assembly: AssemblyVersion("1.0.0.0")]
