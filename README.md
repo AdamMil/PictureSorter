@@ -1,0 +1,1 @@
+This is a program that makes it easier to rename, rotate, and resize large numbers of pictures, generate thumbnails for them, and convert their image formats.
